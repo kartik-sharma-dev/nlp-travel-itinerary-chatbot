@@ -19,6 +19,14 @@ number_words = {
     'nine': '9', 'ten': '10'
 }
 
+def detect_intent(query):
+    hotel_keywords = ['hotel', 'room', 'stay', 
+                      'accommodation', 'lodge', 'resort', 'book']
+    for keyword in hotel_keywords:
+        if keyword in query.lower():
+            return 'hotel'
+    return 'location'
+
 # Preprocesses text by converting to lowercase, replacing number words with digits, removing stop words and punctuation, and lemmatizing.
 def preprocess(text):
     if not isinstance(text, str):
@@ -40,11 +48,11 @@ def preprocess(text):
 def loaddata():
     filepath = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'location.csv')
     filepath2 = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'hotel_places_directory.csv')
-    data = pd.read_csv(filepath)
+    data1 = pd.read_csv(filepath)
     data2 = pd.read_csv(filepath2)
-    data = pd.concat([data, data2])
+    data = pd.concat([data1, data2])
     data.drop_duplicates(inplace=True)
-    data.fillna('', inplace=True)
+    data = data.fillna('')
     data['processed_country'] = data['Country'].apply(preprocess)
     data['processed_state'] = data['State/Province'].apply(preprocess)
     data['processed_place_name'] = data['PlaceName'].apply(preprocess)
@@ -62,23 +70,28 @@ def extract_person_count(query):
     for word, digit in number_words.items():
         query = re.sub(rf'\b{word}\b', digit, query.lower())
     
-    match = re.search(r'\b(\d+)\s*(people|persons?|guests?|adults?|members?)?\b', query)
+    match = re.search(r'\b(\d+)\s+(people|persons?|guests?|adults?|members?)\b', query)
     if match:
         return int(match.group(1))
     return None
 
+
 def extract_location(query):
-    fillers = [
-        'i am near', 'i am at', 'near', 'around', 'close to',
-        'i need', 'a room', 'for', 'people', 'persons', 'guests',
-        'can you tell', 'some nearby hotel', 'hotel', 'nearby',
-        'hy', 'hi', 'hello', 'hey'
-    ]
+    fillers = sorted([
+        'i am near', 'i am at', 'i am', 'can you tell me', 'can you tell',
+        'some nearby hotel', 'some nearby', 'nearby hotel', 'where i can stay',
+        'i can stay', 'can stay', 'close to', 'i need', 'a room',
+        'around', 'nearby', 'near', 'people', 'persons', 'guests',
+        'hotel', 'some', 'where', 'stay', 'tell', 'for',
+        'hy', 'hi', 'hey', 'hello', 'me', 'i', 'can'
+    ], key=len, reverse=True)
+
     query = query.lower()
     for filler in fillers:
-        query = re.sub(rf'\b{filler}\b', '', query)
-    
-    return query.strip()
+        query = re.sub(rf'\b{re.escape(filler)}\b', ' ', query)
+
+    query = re.sub(r'\s+', ' ', query).strip()
+    return query
 
 
 def calculate_similarity(query, target):
@@ -153,7 +166,51 @@ def build_chain(best_row, data, max_stops=None):
         chain.append(row)
         visited.add((row['Latitude'], row['Longitude']))
     return chain
+def handle_query(user_query, data, vectorizer, tfidf_matrix):
 
+    print(f"\nUser Query: {user_query}")
+
+    # step 1 - extract person count
+    person_count = extract_person_count(user_query)
+    print(f"Detected person count: {person_count}")
+
+    # step 2 - extract location
+    location_query = extract_location(user_query)
+    print(f"Detected location: {location_query}")
+
+    # step 3 - preprocess and vectorize the location
+    processed_query = preprocess(location_query)
+    query_vector    = vectorizer.transform([processed_query])
+
+    # step 4 - cosine similarity against all place names
+    similarities = cosine_similarity(query_vector, tfidf_matrix).flatten()
+
+    # step 5 - filter hotel rows and assign similarity before filtering
+    hotel_data = data[data['hotel-name'].str.strip() != ''].copy()
+    hotel_data = hotel_data[hotel_data['hotel-name'] != '0']
+    hotel_data['similarity'] = similarities[hotel_data.index]
+
+    # step 6 - filter by person count if detected
+    filtered = hotel_data
+    if person_count:
+        filtered = hotel_data[
+            pd.to_numeric(hotel_data['person aloud per room'], errors='coerce') >= person_count
+        ]
+
+    # step 7 - sort by similarity and return top 5
+    results = filtered.sort_values('similarity', ascending=False).head(5)
+
+    print("\n" + "=" * 52)
+    for i, (_, row) in enumerate(results.iterrows()):
+        print(f"\n  Hotel {i+1}  : {row['hotel-name']}")
+        print(f"  Place     : {row['PlaceName']}")
+        print(f"  Room Type : {row['room type']}")
+        print(f"  Capacity  : {row['person aloud per room']} people")
+        print(f"  Rating    : {row['rating']}")
+        print(f"  Price     : ${row['price']}")
+    print("=" * 52)
+
+    return results
 
 def location(query, data):
     if not query:
@@ -179,38 +236,15 @@ def location(query, data):
     print("=" * 52)
 
 
-query = input("Enter your question: ")
-location(query, data)
-def handle_query(user_query, data, vectorizer, tfidf_matrix):
 
-    print(f"\nUser Query: {user_query}")
 
-    # step 1 - extract person count
-    person_count = extract_person_count(user_query)
-    print(f"Detected person count: {person_count}")
 
-    # step 2 - extract location
-    location_query = extract_location(user_query)
-    print(f"Detected location: {location_query}")
+if __name__ == '__main__':
+    query = input("Enter your question: ")
+    intent = detect_intent(query)
+    if intent == 'hotel':
+        handle_query(query, data, vectorizer, tfidf_matrix)
+    else:
+        location(query, data)
 
-    # step 3 - preprocess and vectorize the location
-    processed_query = preprocess(location_query)
-    query_vector    = vectorizer.transform([processed_query])
-
-    # step 4 - cosine similarity against all place names
-    similarities = cosine_similarity(query_vector, tfidf_matrix).flatten()
-    data['similarity'] = similarities
-
-    # step 5 - filter by person count if detected
-    filtered = data.copy()
-    if person_count:
-        filtered = filtered[
-            filtered['person aloud per room'] >= person_count
-        ]
-
-    # step 6 - sort by similarity and return top 5
-    results = filtered.sort_values('similarity', ascending=False).head(5)
-
-    return results[['PlaceName', 'hotel-name', 'person aloud per room', 
-                     'rating', 'price', 'room type']]
 
