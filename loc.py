@@ -21,7 +21,7 @@ number_words = {
 
 def detect_intent(query):
     hotel_keywords = ['hotel', 'room', 'stay', 
-                      'accommodation', 'lodge', 'resort', 'book']
+                      'accommodation', 'lodge', 'resort', 'booking']
     for keyword in hotel_keywords:
         if keyword in query.lower():
             return 'hotel'
