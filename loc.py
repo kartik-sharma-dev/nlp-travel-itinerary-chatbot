@@ -1,6 +1,5 @@
 import os
 import re
-import numpy as np
 import pandas as pd
 import spacy
 from rapidfuzz import fuzz
@@ -9,9 +8,32 @@ from sklearn.metrics.pairwise import cosine_similarity
 import math
 
 
-nlp = spacy.load('en_core_web_sm')
+nlp = spacy.load('en_core_web_md')
 
 LABELS = ['A', 'B', 'C', 'D', 'E']
+
+intents = {
+    "hotel-keywords": {
+        "keywords": ['hotel', 'room', 'stay', 'accommodation', 'lodge', 'resort', 'book']     
+
+    },
+    
+    "location-keywords": {
+        "keywords": ['nearby', 'near', 'close to', 'around', 'some nearby', 'where i can stay', 'i can stay', 'can stay']
+    },
+    "distance-query-keywords": {
+        "keywords": ['distance', 'how far', 'km', 'miles', 'haversine', 'next closest', 'closest', 'nearby']
+    },
+    "restaurant-keywords": {
+        "keywords": ['restaurant', 'food', 'dining', 'eatery', 'cafe', 'diner', 'bistro', 'eat']    
+    },
+    "taxicab-keywords": {
+        "keywords": ['taxi', 'cab', 'ride', 'transport', 'uber', 'lyft', 'taxicab', 'chauffeur']
+    }
+
+}
+
+
 
 number_words = {
     'one': '1', 'two': '2', 'three': '3', 'four': '4',
@@ -20,14 +42,20 @@ number_words = {
 }
 
 def detect_intent(query):
-    hotel_keywords = ['hotel', 'room', 'stay', 
-                      'accommodation', 'lodge', 'resort', 'book']
-    for keyword in hotel_keywords:
-        if keyword in query.lower():
-            return 'hotel'
-    return 'location'
+    query = query.lower()
+    
+    distance_specific = ['distance', 'how far', 'km', 'miles', 'haversine']
+    if any(kw in query for kw in distance_specific):
+        return 'distance'
+    
+    intent_return = {intent.split('-')[0]: 0 for intent in intents}
+    for intent, details in intents.items():
+        for keyword in details['keywords']:
+            if keyword in query:
+                intent_return[intent.split('-')[0]] = True
+                break
+    return max(intent_return, key=intent_return.get)
 
-# Preprocesses text by converting to lowercase, replacing number words with digits, removing stop words and punctuation, and lemmatizing.
 def preprocess(text):
     if not isinstance(text, str):
         text = str(text)
@@ -43,7 +71,7 @@ def preprocess(text):
         elif not token.is_stop:
             tokens.append(token.text)   
     return " ".join(tokens)
-#jhdfjk
+
 
 def loaddata():
     filepath = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'location.csv')
@@ -71,7 +99,6 @@ def loaddata():
 
 data, vectorizer, tfidf_matrix = loaddata()
 
-# Extracts the number of people from the query by replacing number words with digits and using regex to find numeric patterns followed by relevant keywords.
 def extract_person_count(query):
     
     for word, digit in number_words.items():
@@ -196,25 +223,21 @@ def handle_query(user_query, data, vectorizer, tfidf_matrix):
 
     similarities = cosine_similarity(query_vector, tfidf_matrix).flatten()
 
-    # filter hotel rows
     hotel_data = data[data['hotel-name'].str.strip() != ''].copy()
     hotel_data = hotel_data[hotel_data['hotel-name'] != '0']
 
-    # combined score: TF-IDF + fuzzy match on PlaceName for typo tolerance
     hotel_data['tfidf_score'] = similarities[hotel_data.index]
     hotel_data['fuzz_score']  = hotel_data['processed_place_name'].apply(
         lambda name: calculate_similarity(processed_query, name)
     )
     hotel_data['similarity'] = hotel_data['tfidf_score'] * 0.3 + hotel_data['fuzz_score'] * 0.7
 
-    # step 6 - filter by person count if detected
     filtered = hotel_data
     if person_count:
         filtered = hotel_data[
             pd.to_numeric(hotel_data['person aloud per room'], errors='coerce') >= person_count
         ]
 
-    # step 7 - sort by similarity and return top 5
     results = filtered.sort_values('similarity', ascending=False).head(5)
 
     print("\n" + "=" * 52)
@@ -251,9 +274,69 @@ def location(query, data):
         if i < len(chain) - 1:
             print(f"             ↓")
     print("=" * 52)
+def extract_entities_bio(query):
+    
+    doc = nlp(query)
+    entities = []
+    for ent in doc.ents:
+        if ent.label_ in ('GPE', 'LOC', 'FAC'):
+            entities.append(ent.text.lower().strip())
+    return entities
 
+def handle_distance_query(query, data):
+    
+    print(f"\nUser Query: {query}")
 
+    entities = extract_entities_bio(query)
+    print(f"Detected entities: {entities}")
 
+    if len(entities) < 2:
+        print("  spaCy found fewer than 2 entities, trying fallback...")
+        fallback = extract_location(query)
+        parts = [p.strip() for p in fallback.split(' and ') if p.strip()]
+        entities = parts
+        print(f"  Fallback entities: {entities}")
+
+    if len(entities) < 2:
+        print("  Could not detect two locations in your query.")
+        print("  Try: 'distance between <place1> and <place2>'")
+        return
+
+    processed_a = preprocess(entities[0])
+    processed_b = preprocess(entities[1])
+
+    ranked_a = score_and_rank(processed_a, data)
+    ranked_b = score_and_rank(processed_b, data)
+
+    place_a = ranked_a.iloc[0]
+    place_b = ranked_b.iloc[0]
+
+    print(f"  Matched A: {place_a['PlaceName']} (score: {ranked_a.iloc[0]['final_score']:.1f})")
+    print(f"  Matched B: {place_b['PlaceName']} (score: {ranked_b.iloc[0]['final_score']:.1f})")
+
+    dist = haversine(
+        place_a['Latitude'], place_a['Longitude'],
+        place_b['Latitude'], place_b['Longitude']
+    )
+
+    print()
+    print("=" * 52)
+    print(f"  Place A  : {place_a['PlaceName']}")
+    print(f"             {place_a['State/Province']}, {place_a['Country']}")
+    print(f"             Lat {place_a['Latitude']}  |  Lon {place_a['Longitude']}")
+    print()
+    print(f"  Place B  : {place_b['PlaceName']}")
+    print(f"             {place_b['State/Province']}, {place_b['Country']}")
+    print(f"             Lat {place_b['Latitude']}  |  Lon {place_b['Longitude']}")
+    print()
+    print(f"  Distance : {dist} km")
+    print("=" * 52)
+
+    return {
+        'place_a': place_a,
+        'place_b': place_b,
+        'distance_km': dist
+    }
 
 
 if __name__ == '__main__':
@@ -263,9 +346,14 @@ if __name__ == '__main__':
             break
         if not query:
             continue
+
         intent = detect_intent(query)
+        print(f"Detected intent: {intent}")
+
         if intent == 'hotel':
             handle_query(query, data, vectorizer, tfidf_matrix)
+        elif intent == 'distance':
+            handle_distance_query(query, data)
         else:
             location(query, data)
 
