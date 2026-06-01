@@ -50,6 +50,13 @@ def loaddata():
     filepath2 = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'hotel_places_directory.csv')
     data1 = pd.read_csv(filepath)
     data2 = pd.read_csv(filepath2)
+    data2 = data2.rename(columns={
+        'country': 'Country',
+        'state': 'State/Province',
+        'place name': 'PlaceName',
+        'latitude': 'Latitude',
+        'longitude': 'Longitude',
+    })
     data = pd.concat([data1, data2])
     data.drop_duplicates(inplace=True)
     data = data.fillna('')
@@ -170,25 +177,35 @@ def handle_query(user_query, data, vectorizer, tfidf_matrix):
 
     print(f"\nUser Query: {user_query}")
 
-    # step 1 - extract person count
+    
     person_count = extract_person_count(user_query)
     print(f"Detected person count: {person_count}")
 
-    # step 2 - extract location
+    
     location_query = extract_location(user_query)
-    print(f"Detected location: {location_query}")
+    if location_query == '':
+        location_query = input("  Please enter a location to find hotels nearby: ").strip()
+        if not location_query:
+            print("  No location provided. Exiting.")
+            return
+    
 
-    # step 3 - preprocess and vectorize the location
+    
     processed_query = preprocess(location_query)
     query_vector    = vectorizer.transform([processed_query])
 
-    # step 4 - cosine similarity against all place names
     similarities = cosine_similarity(query_vector, tfidf_matrix).flatten()
 
-    # step 5 - filter hotel rows and assign similarity before filtering
+    # filter hotel rows
     hotel_data = data[data['hotel-name'].str.strip() != ''].copy()
     hotel_data = hotel_data[hotel_data['hotel-name'] != '0']
-    hotel_data['similarity'] = similarities[hotel_data.index]
+
+    # combined score: TF-IDF + fuzzy match on PlaceName for typo tolerance
+    hotel_data['tfidf_score'] = similarities[hotel_data.index]
+    hotel_data['fuzz_score']  = hotel_data['processed_place_name'].apply(
+        lambda name: calculate_similarity(processed_query, name)
+    )
+    hotel_data['similarity'] = hotel_data['tfidf_score'] * 0.3 + hotel_data['fuzz_score'] * 0.7
 
     # step 6 - filter by person count if detected
     filtered = hotel_data
@@ -240,11 +257,16 @@ def location(query, data):
 
 
 if __name__ == '__main__':
-    query = input("Enter your question: ")
-    intent = detect_intent(query)
-    if intent == 'hotel':
-        handle_query(query, data, vectorizer, tfidf_matrix)
-    else:
-        location(query, data)
+    while True:
+        query = input("\nEnter your question (or 'quit' to exit): ").strip()
+        if query.lower() in ('quit', 'exit', 'q'):
+            break
+        if not query:
+            continue
+        intent = detect_intent(query)
+        if intent == 'hotel':
+            handle_query(query, data, vectorizer, tfidf_matrix)
+        else:
+            location(query, data)
 
 
