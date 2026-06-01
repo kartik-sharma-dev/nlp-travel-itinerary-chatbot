@@ -43,7 +43,7 @@ def preprocess(text):
         elif not token.is_stop:
             tokens.append(token.text)   
     return " ".join(tokens)
-
+#jhdfjk
 
 def loaddata():
     filepath = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'location.csv')
