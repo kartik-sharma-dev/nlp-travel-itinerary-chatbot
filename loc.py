@@ -1,4 +1,5 @@
 import os
+import re
 import numpy as np
 import pandas as pd
 import spacy
@@ -12,29 +13,72 @@ nlp = spacy.load('en_core_web_sm')
 
 LABELS = ['A', 'B', 'C', 'D', 'E']
 
+number_words = {
+    'one': '1', 'two': '2', 'three': '3', 'four': '4',
+    'five': '5', 'six': '6', 'seven': '7', 'eight': '8',
+    'nine': '9', 'ten': '10'
+}
 
+# Preprocesses text by converting to lowercase, replacing number words with digits, removing stop words and punctuation, and lemmatizing.
 def preprocess(text):
     if not isinstance(text, str):
-        return ""
-    doc = nlp(text.lower())
-    tokens = [token.lemma_ for token in doc if not token.is_stop and not token.is_punct]
+        text = str(text)
+    for word, num in number_words.items():
+        text = text.replace(word, num)
+    doc = nlp(text)
+    tokens = []
+    for token in doc:
+        if token.is_stop or token.is_punct:
+            continue
+        if token.like_num:               
+            tokens.append(token.text)
+        elif not token.is_stop:
+            tokens.append(token.text)   
     return " ".join(tokens)
 
 
 def loaddata():
     filepath = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'location.csv')
+    filepath2 = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'hotel_places_directory.csv')
     data = pd.read_csv(filepath)
+    data2 = pd.read_csv(filepath2)
+    data = pd.concat([data, data2])
+    data.drop_duplicates(inplace=True)
     data.fillna('', inplace=True)
     data['processed_country'] = data['Country'].apply(preprocess)
     data['processed_state'] = data['State/Province'].apply(preprocess)
     data['processed_place_name'] = data['PlaceName'].apply(preprocess)
+    data['combined'] = data['processed_place_name'] + " " + data['processed_state'] + " " + data['processed_country']
     vectorizer = TfidfVectorizer(analyzer='char_wb', ngram_range=(3, 5))
     tfidf_matrix = vectorizer.fit_transform(data['processed_place_name'])
-    data['combined'] = data['processed_place_name'] + " " + data['processed_state'] + " " + data['processed_country']
     return data, vectorizer, tfidf_matrix
 
 
 data, vectorizer, tfidf_matrix = loaddata()
+
+# Extracts the number of people from the query by replacing number words with digits and using regex to find numeric patterns followed by relevant keywords.
+def extract_person_count(query):
+    
+    for word, digit in number_words.items():
+        query = re.sub(rf'\b{word}\b', digit, query.lower())
+    
+    match = re.search(r'\b(\d+)\s*(people|persons?|guests?|adults?|members?)?\b', query)
+    if match:
+        return int(match.group(1))
+    return None
+
+def extract_location(query):
+    fillers = [
+        'i am near', 'i am at', 'near', 'around', 'close to',
+        'i need', 'a room', 'for', 'people', 'persons', 'guests',
+        'can you tell', 'some nearby hotel', 'hotel', 'nearby',
+        'hy', 'hi', 'hello', 'hey'
+    ]
+    query = query.lower()
+    for filler in fillers:
+        query = re.sub(rf'\b{filler}\b', '', query)
+    
+    return query.strip()
 
 
 def calculate_similarity(query, target):
@@ -137,4 +181,36 @@ def location(query, data):
 
 query = input("Enter your question: ")
 location(query, data)
+def handle_query(user_query, data, vectorizer, tfidf_matrix):
+
+    print(f"\nUser Query: {user_query}")
+
+    # step 1 - extract person count
+    person_count = extract_person_count(user_query)
+    print(f"Detected person count: {person_count}")
+
+    # step 2 - extract location
+    location_query = extract_location(user_query)
+    print(f"Detected location: {location_query}")
+
+    # step 3 - preprocess and vectorize the location
+    processed_query = preprocess(location_query)
+    query_vector    = vectorizer.transform([processed_query])
+
+    # step 4 - cosine similarity against all place names
+    similarities = cosine_similarity(query_vector, tfidf_matrix).flatten()
+    data['similarity'] = similarities
+
+    # step 5 - filter by person count if detected
+    filtered = data.copy()
+    if person_count:
+        filtered = filtered[
+            filtered['person aloud per room'] >= person_count
+        ]
+
+    # step 6 - sort by similarity and return top 5
+    results = filtered.sort_values('similarity', ascending=False).head(5)
+
+    return results[['PlaceName', 'hotel-name', 'person aloud per room', 
+                     'rating', 'price', 'room type']]
 
