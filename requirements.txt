@@ -1,6 +1,6 @@
-numpy
-pandas
-spacy
-rapidfuzz
-scikit-learn
+numpy==2.4.6
+pandas==3.0.3
+spacy==3.8.13
+rapidfuzz==3.14.5
+scikit-learn==1.8.0
 # After installing, run: python -m spacy download en_core_web_sm

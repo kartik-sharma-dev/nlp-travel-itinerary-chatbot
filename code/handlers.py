@@ -6,6 +6,7 @@ from query_utils import extract_person_count, extract_location, extract_entities
 from scoring import score_and_rank, build_chain, haversine, LABELS, calculate_similarity
 import random
 from preprocess import nlp
+import re
 
 
 def _fmt_coord(val):
@@ -45,7 +46,7 @@ def handle_query(user_query, data, vectorizer, tfidf_matrix):
     print(f"\nUser Query: {user_query}")
 
     person_count = extract_person_count(user_query)
-    print(f"Detected person count: {person_count}")
+    
 
     location_query = extract_location(user_query)
     if location_query == '':
@@ -94,35 +95,37 @@ def handle_query(user_query, data, vectorizer, tfidf_matrix):
     return results
 
 
+def clean_entity(text):
+    noise = r'\b(the|a|an|distance|between|from|to|tell|me|hey|find|what|is)\b'
+    cleaned = re.sub(noise, '', text, flags=re.IGNORECASE).strip()
+    return cleaned
+
 def handle_distance_query(query, data, vectorizer, tfidf_matrix):
     print(f"\nUser Query: {query}")
-
     entities = extract_entities_bio(query)
-    print(f"Detected entities: {entities}")
+    
 
     if len(entities) < 2:
-        print("  spaCy found fewer than 2 entities, trying fallback...")
+        
         fallback = extract_location(query)
         parts = [p.strip() for p in fallback.split(' and ') if p.strip()]
         entities = parts
-        print(f"  Fallback entities: {entities}")
+       
 
     if len(entities) < 2:
         print("  Could not detect two locations in your query.")
         print("  Try: 'distance between <place1> and <place2>'")
         return
 
-    processed_a = preprocess(entities[0])
-    processed_b = preprocess(entities[1])
+    
+    entity_a = clean_entity(entities[0])
+    entity_b = clean_entity(entities[1])
 
-    ranked_a = score_and_rank(processed_a, data, vectorizer, tfidf_matrix)
-    ranked_b = score_and_rank(processed_b, data, vectorizer, tfidf_matrix)
+    ranked_a = score_and_rank(preprocess(entity_a), data, vectorizer, tfidf_matrix)
+    ranked_b = score_and_rank(preprocess(entity_b), data, vectorizer, tfidf_matrix)
 
     place_a = ranked_a.iloc[0]
     place_b = ranked_b.iloc[0]
-
-    print(f"  Matched A: {place_a['PlaceName']} (score: {ranked_a.iloc[0]['final_score']:.1f})")
-    print(f"  Matched B: {place_b['PlaceName']} (score: {ranked_b.iloc[0]['final_score']:.1f})")
 
     dist = haversine(
         place_a['Latitude'], place_a['Longitude'],
