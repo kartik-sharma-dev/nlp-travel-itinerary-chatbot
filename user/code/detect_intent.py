@@ -1,6 +1,6 @@
 import re
 
-# The preprocess_location_query function takes a user's query and removes any budget-related information, day/night counts, trip planning phrases, and common filler words to isolate the core location or destination mentioned in the query, which can then be used for more accurate matching against a dataset of locations.
+
 session = {
     "last_location" : None,
     "last_intent"   : None,
@@ -12,7 +12,7 @@ session = {
         "budget"    : None,
     }
 }
-# The reset_session function clears all stored information in the session, including the last location, intent, results, trip duration, and user preferences, effectively resetting the state of the assistant to handle a new conversation or query without any prior context.
+
 def reset_session():
     session["last_location"] = None
     session["last_intent"]   = None
@@ -54,7 +54,7 @@ intents = {
 
 INTENT_PRIORITY = ['location', 'restaurant', 'taxicab', 'hotel', 'distance', 'itinerary']
 
-# The detect_intent function analyzes the user's query to determine the underlying intent by checking for specific keywords and patterns associated with different intents, such as distance queries, itinerary planning, and location-based requests, and returns the identified intent in a structured format for further processing by the assistant.
+
 def detect_intent(query):
     query_lower = query.lower()
 
@@ -88,7 +88,7 @@ def detect_intent(query):
 
     return matched[0]
 
-# The calculate_similarity function computes a fuzzy string similarity score between the user's query and a target string, which helps in ranking potential matches based on how closely they resemble the query.
+
 def wrong_intent(intent):
     if not isinstance(intent, dict):
         print("I'm here to help with specific recommendations and places. What would you like to know?")
@@ -98,7 +98,7 @@ def wrong_intent(intent):
             return True
     print("I'm here to help with specific recommendations and places. What would you like to know?")
 
-# The calculate_similarity function computes a fuzzy string similarity score between the user's query and a target string, which helps in ranking potential matches based on how closely they resemble the query.
+
 def update_intent(current_intent, query):
 
     new_intent = detect_intent(query)
@@ -118,7 +118,7 @@ def update_intent(current_intent, query):
 
     return new_intent
 
-# The calculate_similarity function computes a fuzzy string similarity score between the user's query and a target string, which helps in ranking potential matches based on how closely they resemble the query.
+
 def add_intent(name, keywords):
  
     key = f"{name}-keywords"

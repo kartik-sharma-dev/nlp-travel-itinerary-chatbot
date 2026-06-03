@@ -8,7 +8,7 @@ from handlers import (
     handle_itinerary_query,
     handle_greeting,
 )
-# Load all data and models at startup to avoid repeated loading during queries
+
 data, hotel_df, restaurant_df, landmark_df, vectorizer, tfidf_matrix = load_all_data()
 
 if __name__ == '__main__':

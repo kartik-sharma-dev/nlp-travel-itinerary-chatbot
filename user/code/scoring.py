@@ -4,7 +4,7 @@ from sklearn.metrics.pairwise import cosine_similarity
 
 LABELS = ['A', 'B', 'C', 'D', 'E']
 
-# Scoring functions it helps to calculate similarity between query and target strings, compute distances, and rank results based on fuzzy and TF-IDF scores.
+
 def calculate_similarity(query, target):
     if not query or not target:
         return 0
@@ -16,7 +16,7 @@ def calculate_similarity(query, target):
         scores.append(bestmatch)
     return sum(scores) / len(scores) if scores else 0
 
-# The haversine function computes the great-circle distance between two points on the Earth given their latitude and longitude, which is essential for determining proximity in location-based queries.
+
 def haversine(lat1, lon1, lat2, lon2):
     R = 6371
     lat1_r, lon1_r, lat2_r, lon2_r = map(math.radians, [lat1, lon1, lat2, lon2])
@@ -25,7 +25,7 @@ def haversine(lat1, lon1, lat2, lon2):
     a = math.sin(dlat / 2)**2 + math.cos(lat1_r) * math.cos(lat2_r) * math.sin(dlon / 2)**2
     return round(R * 2 * math.asin(math.sqrt(a)), 2)
 
-# The next_closest function identifies the nearest unvisited location from a set of nearby places, ensuring that the same location isn't revisited and allowing for a minimum distance threshold to filter out very close locations.
+
 def next_closest(lat, lon, nearby, visited_coords, min_distance=0):
     col       = 'dist_tmp'
     distances = []
@@ -44,7 +44,7 @@ def next_closest(lat, lon, nearby, visited_coords, min_distance=0):
     best_idx = valid[col].idxmin()
     return valid.loc[best_idx], valid.loc[best_idx, col]
 
-# The score_and_rank function combines fuzzy string matching and TF-IDF cosine similarity to compute a final relevance score for each location in the dataset, allowing for a ranked list of results based on how well they match the user's query.
+
 def score_and_rank(processed, data, vectorizer, tfidf_matrix):
     def fuzzyscore(row):
         place   = calculate_similarity(processed, row['proc_location']) * 0.70
@@ -60,7 +60,6 @@ def score_and_rank(processed, data, vectorizer, tfidf_matrix):
     scored['final_score'] = scored['fuzz_score'] * 0.7 + scored['tfidf_score'] * 0.3
     return scored.sort_values('final_score', ascending=False)
 
-# The build_chain function constructs a sequence of nearby locations starting from the best match, ensuring that each subsequent location is the closest unvisited one, and allowing for constraints on the number of stops, minimum distance, and whether to include only places.
 
 def build_chain(best_row, data, max_stops=None, min_distance=0, place_only=False):
     if max_stops is None:

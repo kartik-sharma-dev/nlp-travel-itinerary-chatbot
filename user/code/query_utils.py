@@ -1,7 +1,7 @@
 import re
 from preprocess import nlp
 
-# The extract_location function takes a user query and removes common filler words and phrases to isolate the core location information, making it easier for subsequent processing steps to identify the intended location.
+
 def extract_location(query):
     fillers = sorted([
         'i am near', 'i am at', 'i am', 'can you tell me', 'can you tell',
@@ -18,7 +18,7 @@ def extract_location(query):
     query = re.sub(r'\s+', ' ', query).strip()
     return query
 
-# The calculate_similarity function computes a fuzzy string similarity score between the user's query and a target string, which helps in ranking potential matches based on how closely they resemble the query.
+
 def extract_entities_bio(query):
     doc = nlp(query)
     entities = []
@@ -27,7 +27,7 @@ def extract_entities_bio(query):
             entities.append(ent.text.lower().strip())
     return entities
 
-# The extract_itinerary_location function is designed to parse user queries related to travel itineraries, extracting the intended destination while removing extraneous information such as budget, duration, and common trip-related phrases, thus isolating the core location for itinerary planning.
+
 def extract_itinerary_location(query):
     # Try NER first — most reliable when spaCy recognises the city
     doc = nlp(query)
@@ -69,7 +69,7 @@ def extract_itinerary_location(query):
 
     return re.sub(r'\s+', ' ', q).strip()
 
-# The extract_days function identifies and extracts the number of days or nights mentioned in a user's query, which is crucial for planning itineraries and providing relevant recommendations based on the duration of the trip.
+
 def extract_days(query):
     query_lower = query.lower()
     word_to_num = {
@@ -84,7 +84,7 @@ def extract_days(query):
             return num
     return None
 
-# The extract_budget function parses the user's query to identify any mentioned budget constraints, extracting numerical values associated with currency indicators or budget-related phrases, which can then be used to filter recommendations based on the user's financial preferences.
+
 def extract_budget(query):
     query_lower = query.lower()
     patterns = [

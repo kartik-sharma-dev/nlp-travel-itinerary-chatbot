@@ -9,11 +9,11 @@ import re
 from preprocess import nlp
 from detect_intent import session
 
-# The fmt_coord function formats latitude and longitude values to four decimal places for display, while handling cases where the value may be missing (NaN) by showing "N/A" instead, ensuring that the output is both precise and user-friendly.
+
 def fmt_coord(val):
     return f"{val:.4f}" if not (isinstance(val, float) and math.isnan(val)) else "N/A"
 
-# The resolve_location function attempts to extract a location from the user's query, and if it fails to find one, it falls back to the last known location stored in the session, allowing for a more seamless user experience by remembering previous context.
+
 def resolve_location(query):
   
     location_query = extract_location(query)
@@ -24,7 +24,7 @@ def resolve_location(query):
 
     return location_query
 
-# The handle_greeting function processes user queries that are identified as greetings, responding with a random friendly message from a predefined list, and uses natural language processing to detect if the query contains interjections or is a short sentence directed at the assistant, ensuring that it responds appropriately to various forms of greetings.
+
 def handle_greeting(query):
     greet_responses = [
         "Hello! How can I help you today?",
@@ -53,7 +53,7 @@ def handle_greeting(query):
 
     print(random.choice(greet_responses))
 
-# The handle_hotel_query function processes user queries related to hotels by extracting the location from the query, preprocessing it, and then calculating similarity scores against a hotel dataset to find and display the top matching hotels, while also saving the results to the session for future reference.
+
 def handle_hotel_query(query, data, hotel_df, vectorizer, tfidf_matrix):
     print(f"\nUser Query: {query}")
 
@@ -100,7 +100,7 @@ def handle_hotel_query(query, data, hotel_df, vectorizer, tfidf_matrix):
 
     return results
 
-# The handle_restaurant_query function processes user queries related to restaurants by extracting the location, preprocessing it, and calculating similarity scores against a restaurant dataset to find and display the top matching restaurants, while also saving the results to the session for future reference.
+
 def handle_restaurant_query(query, data, restaurant_df, vectorizer, tfidf_matrix):
     print(f"\nUser Query: {query}")
 
@@ -144,13 +144,13 @@ def handle_restaurant_query(query, data, restaurant_df, vectorizer, tfidf_matrix
     session["last_results"] = results
 
     return results
-# The handle_distance_query function processes user queries that ask for the distance between two locations by extracting the location entities from the query, resolving them to known places in the dataset, calculating the haversine distance between the two locations, and then displaying the results in a user-friendly format, while also saving the results to the session for future reference.
+
 
 def clean_entity(text):
     noise = r'\b(the|a|an|distance|between|from|to|tell|me|hey|find|what|is)\b'
     cleaned = re.sub(noise, '', text, flags=re.IGNORECASE).strip()
     return cleaned
-# The find_nearest_in_df function takes latitude and longitude coordinates and a DataFrame of locations, and returns the nearest location from the DataFrame along with the distance to it, while handling cases where the DataFrame may be empty or contain missing coordinate values.
+
 
 def handle_distance_query(query, data, vectorizer, tfidf_matrix):
     print(f"\nUser Query: {query}")
@@ -196,7 +196,7 @@ def handle_distance_query(query, data, vectorizer, tfidf_matrix):
 
     return {"place_a": place_a, "place_b": place_b, "distance_km": dist}
 
-# The handle_location_query function processes user queries that are related to finding locations by extracting the location from the query, preprocessing it, calculating similarity scores against the dataset, and then displaying the top matching locations in a user-friendly format, while also saving the results to the session for future reference.
+
 def find_nearest_in_df(lat, lon, df):
     if df.empty:
         return None, None
@@ -212,7 +212,7 @@ def find_nearest_in_df(lat, lon, df):
     idx = valid['_dist'].idxmin()
     return valid.loc[idx], valid.loc[idx, '_dist']
 
-# The handle_itinerary_query function processes user queries related to travel itineraries by extracting the intended destination, duration, and budget from the query, finding the best matching location in the dataset, and then building a multi-day itinerary of nearby places to visit, along with hotel and restaurant recommendations for each day, while also saving the results to the session for future reference.
+
 def handle_itinerary_query(query, data, hotel_df, restaurant_df, vectorizer, tfidf_matrix):
     print(f"\nUser Query: {query}")
 
@@ -324,7 +324,7 @@ def handle_itinerary_query(query, data, hotel_df, restaurant_df, vectorizer, tfi
     session["last_results"] = chain
     return chain
 
-# The handle_location_query function processes user queries that are related to finding locations by extracting the location from the query, preprocessing it, calculating similarity scores against the dataset, and then displaying the top matching locations in a user-friendly format, while also saving the results to the session for future reference.
+
 def handle_location_query(query, data, vectorizer, tfidf_matrix):
     if not query:
         return None
