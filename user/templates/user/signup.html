@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sign Up</title>
+
+<style>
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:Arial,sans-serif;
+}
+
+body{
+    min-height:100vh;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    background:linear-gradient(135deg,#667eea,#764ba2);
+}
+
+.container{
+    width:400px;
+    background:white;
+    padding:30px;
+    border-radius:15px;
+    box-shadow:0 5px 20px rgba(0,0,0,0.2);
+}
+
+h2{
+    text-align:center;
+    margin-bottom:20px;
+    color:#333;
+}
+
+.input-group{
+    margin-bottom:15px;
+}
+
+label{
+    display:block;
+    margin-bottom:5px;
+    font-weight:bold;
+}
+
+input{
+    width:100%;
+    padding:10px;
+    border:1px solid #ccc;
+    border-radius:8px;
+    outline:none;
+}
+
+input:focus{
+    border-color:#667eea;
+}
+
+.btn{
+    width:100%;
+    padding:12px;
+    border:none;
+    border-radius:8px;
+    background:#667eea;
+    color:white;
+    font-size:16px;
+    cursor:pointer;
+}
+
+.btn:disabled{
+    background:gray;
+    cursor:not-allowed;
+}
+
+.message{
+    font-size:13px;
+    margin-top:5px;
+}
+
+.success{
+    color:green;
+}
+
+.error{
+    color:red;
+}
+
+.login-link{
+    text-align:center;
+    margin-top:15px;
+}
+
+.login-link a{
+    text-decoration:none;
+    color:#667eea;
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+
+    <h2>Create Account</h2>
+
+    <form method="POST">
+
+        {% csrf_token %}
+
+        <div class="input-group">
+            <label>Name</label>
+            <input type="text" name="name" required>
+        </div>
+
+        <div class="input-group">
+            <label>Email</label>
+            <input type="email" id="email" name="email" required>
+            <div id="emailMessage" class="message"></div>
+        </div>
+
+        <div class="input-group">
+            <label>Date of Birth</label>
+            <input type="date" name="DOB">
+        </div>
+
+        <div class="input-group">
+            <label>Mobile Number</label>
+            <input type="text" name="mobile">
+        </div>
+
+        <div class="input-group">
+            <label>Password</label>
+            <input type="password" id="password" name="password" required>
+            <div id="passwordMessage" class="message"></div>
+        </div>
+
+        <div class="input-group">
+            <label>Confirm Password</label>
+            <input type="password" id="confirmPassword" name="confirm_password" required>
+            <div id="confirmMessage" class="message"></div>
+        </div>
+
+        <button type="submit" id="submitBtn" class="btn" disabled>
+            Sign Up
+        </button>
+
+    </form>
+
+    <div class="login-link">
+        Already have an account?
+        <a href="{% url 'login' %}">Login</a>
+    </div>
+
+</div>
+
+<script>
+
+const email = document.getElementById("email");
+const password = document.getElementById("password");
+const confirmPassword = document.getElementById("confirmPassword");
+const submitBtn = document.getElementById("submitBtn");
+
+const emailMessage = document.getElementById("emailMessage");
+const passwordMessage = document.getElementById("passwordMessage");
+const confirmMessage = document.getElementById("confirmMessage");
+
+let emailValid = false;
+let passwordValid = false;
+let confirmValid = false;
+
+function validateForm(){
+    submitBtn.disabled = !(emailValid && passwordValid && confirmValid);
+}
+
+email.addEventListener("input", () => {
+
+    if(email.value.includes("@")){
+        emailValid = true;
+        emailMessage.innerHTML = "✓ Valid Email";
+        emailMessage.className = "message success";
+    }
+    else{
+        emailValid = false;
+        emailMessage.innerHTML = "Email must contain @";
+        emailMessage.className = "message error";
+    }
+
+    validateForm();
+});
+
+password.addEventListener("input", () => {
+
+    const regex =
+    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&.#])[A-Za-z\d@$!%*?&.#]{8,}$/;
+
+    if(regex.test(password.value)){
+        passwordValid = true;
+        passwordMessage.innerHTML =
+        "✓ Strong Password";
+        passwordMessage.className = "message success";
+    }
+    else{
+        passwordValid = false;
+        passwordMessage.innerHTML =
+        "Must contain 8+ chars, uppercase, lowercase, number & special character";
+        passwordMessage.className = "message error";
+    }
+
+    validateConfirmPassword();
+    validateForm();
+});
+
+confirmPassword.addEventListener("input", () => {
+    validateConfirmPassword();
+    validateForm();
+});
+
+function validateConfirmPassword(){
+
+    if(password.value === confirmPassword.value &&
+       confirmPassword.value !== ""){
+
+        confirmValid = true;
+        confirmMessage.innerHTML = "✓ Passwords Match";
+        confirmMessage.className = "message success";
+    }
+    else{
+
+        confirmValid = false;
+        confirmMessage.innerHTML = "Passwords do not match";
+        confirmMessage.className = "message error";
+    }
+}
+
+</script>
+
+</body>
+</html> 
