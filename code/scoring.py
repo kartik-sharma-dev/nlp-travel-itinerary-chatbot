@@ -8,7 +8,7 @@ LABELS = ['A', 'B', 'C', 'D', 'E']
 def calculate_similarity(query, target):
     if not query or not target:
         return 0
-    query_tokens = query.split()
+    query_tokens  = query.split()
     target_tokens = target.split()
     scores = []
     for t in target_tokens:
@@ -26,19 +26,19 @@ def haversine(lat1, lon1, lat2, lon2):
     return round(R * 2 * math.asin(math.sqrt(a)), 2)
 
 
-def next_closest(lat, lon, nearby, visited_coords):
-    col = 'dist_tmp'
+def next_closest(lat, lon, nearby, visited_coords, min_distance=0):
+    col       = 'dist_tmp'
     distances = []
     for _, row in nearby.iterrows():
-        coord = (row['Latitude'], row['Longitude'])
+        coord = (row['lat_location'], row['lon_location'])
         if coord in visited_coords:
             distances.append(None)
         else:
-            distances.append(haversine(lat, lon, row['Latitude'], row['Longitude']))
-    nearby = nearby.copy()
+            distances.append(haversine(lat, lon, row['lat_location'], row['lon_location']))
+    nearby      = nearby.copy()
     nearby[col] = distances
-    valid = nearby.dropna(subset=[col])
-    valid = valid[valid[col] > 0]
+    valid       = nearby.dropna(subset=[col])
+    valid       = valid[valid[col] > min_distance]
     if valid.empty:
         return None, None
     best_idx = valid[col].idxmin()
@@ -47,37 +47,49 @@ def next_closest(lat, lon, nearby, visited_coords):
 
 def score_and_rank(processed, data, vectorizer, tfidf_matrix):
     def fuzzyscore(row):
-        place   = calculate_similarity(processed, row['processed_place_name']) * 0.70
-        state   = calculate_similarity(processed, row['processed_state'])      * 0.20
-        country = calculate_similarity(processed, row['processed_country'])    * 0.10
+        place   = calculate_similarity(processed, row['proc_location']) * 0.70
+        state   = calculate_similarity(processed, row['proc_state'])    * 0.20
+        country = calculate_similarity(processed, row['proc_country'])  * 0.10
         return place + state + country
 
-    scored = data.copy()
-    scored['fuzz_score'] = scored.apply(fuzzyscore, axis=1)
-    query_vec = vectorizer.transform([processed])
-    cosine_scores = cosine_similarity(query_vec, tfidf_matrix).flatten() * 100
+    scored                = data.copy()
+    scored['fuzz_score']  = scored.apply(fuzzyscore, axis=1)
+    query_vec             = vectorizer.transform([processed])
+    cosine_scores         = cosine_similarity(query_vec, tfidf_matrix).flatten() * 100
     scored['tfidf_score'] = cosine_scores
     scored['final_score'] = scored['fuzz_score'] * 0.7 + scored['tfidf_score'] * 0.3
     return scored.sort_values('final_score', ascending=False)
 
 
-def build_chain(best_row, data, max_stops=None):
+def build_chain(best_row, data, max_stops=None, min_distance=0, place_only=False):
     if max_stops is None:
         max_stops = len(LABELS)
-    state_name = best_row['State/Province']
-    nearby = data[
-        (data['State/Province'] == state_name) &
-        data['Latitude'].notna() &
-        data['Longitude'].notna()
+
+    state_name = best_row['state']
+    nearby     = data[
+        (data['state'] == state_name) &
+        data['lat_location'].notna() &
+        data['lon_location'].notna()
     ].copy()
-    chain = [best_row]
-    visited = {(best_row['Latitude'], best_row['Longitude'])}
+
+    if place_only:
+        nearby = nearby[nearby['type'] == 'place']
+
+    chain          = [best_row]
+    visited_coords = {(best_row['lat_location'], best_row['lon_location'])}
+    visited_names  = {best_row['landmark']}
 
     for _ in range(max_stops - 1):
-        prev = chain[-1]
-        row, _ = next_closest(prev['Latitude'], prev['Longitude'], nearby, visited)
+        prev        = chain[-1]
+        candidates  = nearby[~nearby['landmark'].isin(visited_names)]
+        row, _      = next_closest(
+            prev['lat_location'], prev['lon_location'],
+            candidates, visited_coords, min_distance=min_distance
+        )
         if row is None:
             break
         chain.append(row)
-        visited.add((row['Latitude'], row['Longitude']))
+        visited_coords.add((row['lat_location'], row['lon_location']))
+        visited_names.add(row['landmark'])
+
     return chain
