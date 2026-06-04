@@ -33,13 +33,16 @@ AUTHENTICATION_BACKENDS = [
 # Application definition
 
 INSTALLED_APPS = [
+    "daphne",
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'user'
+    'user',
+    "channels",
+
 ]
 
 MIDDLEWARE = [
@@ -69,8 +72,8 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'traveler.wsgi.application'
-
+# WSGI_APPLICATION = 'traveler.wsgi.application'
+ASGI_APPLICATION = 'traveler.asgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
