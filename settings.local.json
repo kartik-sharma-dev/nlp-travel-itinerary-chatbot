@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python3)",
+      "Bash(rm -f \"/Users/kartik/Desktop/Local Projects/AI_ML/bestlocationfinder/code/.data_cache.pkl\" && echo \"Cache deleted\")",
+      "Bash(python3 main.py)",
+      "Bash(timeout 90 python3 -c ' *)"
+    ],
+    "additionalDirectories": [
+      "/Users/kartik/Desktop/Local Projects/AI_ML/bestlocationfinder/code"
+    ]
+  }
+}

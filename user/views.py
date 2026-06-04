@@ -73,15 +73,7 @@ def login_view(request):
         print(user)
         if user is not None:
             login(request, user)
-            session_id=[]
-            inter_Session_id=random.randint(10000000,99999999)
-            inter_Session_id=str(inter_Session_id)
-            for i in inter_Session_id:
-                if len(session_id)%3==0:
-                    session_id.append("-")
-                session_id.append(i)    
-            session_id="".join(session_id)
-            print(session_id)
+            session_id=generating_session_id()
             Chat_Title.objects.create(
                 user=user,chat_id=session_id,chat_title="Not avaibable")
             
@@ -103,58 +95,86 @@ def logout_view(request):
 
 
 def chatbot(request):
-    if not request.session.session_key:
-        request.session.create()
 
-    session_key = request.session.session_key
-
-    chat_session, created = ChatSession.objects.get_or_create(
-        session_key=session_key
-    )
-
-    if created or not chat_session.conversation:
-        chat_session.conversation = [
-            {
-                "sender": "bot",
-                "message": "Hello! Welcome to the chatbot. How can I help you?"
-            }
-        ]
-        chat_session.save()
+    current_chat = Chat_Title.objects.filter(
+        user=request.user
+    ).last()
 
     if request.method == "POST":
+
         user_message = request.POST.get("message")
 
         if user_message:
-            conversation = chat_session.conversation
-
-            conversation.append({
-                "sender": "user",
-                "message": user_message
-            })
 
             bot_reply = "You said: " + user_message
 
-            conversation.append({
-                "sender": "bot",
-                "message": bot_reply
-            })
-
-            chat_session.conversation = conversation
-            chat_session.save()
+            Conversation.objects.create(
+                chat_id=current_chat,
+                user_message=user_message,
+                bot_message=bot_reply
+            )
 
         return redirect("chatbot")
 
-    return render(request, "user/chatbot.html", {
-        "conversation": chat_session.conversation
-    })
+    conversation = Conversation.objects.filter(
+        chat_id=current_chat
+    )
+
+    all_chats = Chat_Title.objects.filter(
+        user=request.user
+    )
+
+    return render(
+        request,
+        "user/chatbot.html",
+        {
+            "conversation": conversation,
+            "all_chats": all_chats,
+            "current_chat": current_chat
+        }
+    )
+
 
 
 def exit_chat(request):
-    if request.session.session_key:
-        ChatSession.objects.filter(
-            session_key=request.session.session_key
-        ).delete()
+    session_id = generating_session_id()
 
-    request.session.flush()
+    Chat_Title.objects.create(
+        user=request.user,
+        chat_id=str(session_id),
+        chat_title="New Chat"
+    )
 
     return redirect("chatbot")
+
+
+
+def conversation(request):
+    con=Conversation.objects.all()
+    print(con)
+    return render(request,"user/conversation.html",{"con":con})
+
+
+def history_based_on_session(request, session):
+    chat = Chat_Title.objects.get(user=request.user,chat_id=session)
+    if request.method == "POST":
+        user_message = request.POST.get("message")
+        if user_message:
+            bot_reply = "You said: " + user_message
+            Conversation.objects.create(chat_id=chat,user_message=user_message,bot_message=bot_reply)
+        return redirect("history_based_on_session",session=session)
+    conversation = Conversation.objects.filter(chat_id=chat)
+    all_chats = Chat_Title.objects.filter(user=request.user)
+    return render(request,"user/chatbot.html",{"conversation": conversation,"all_chats": all_chats,"current_chat": chat})
+
+
+def chat_title_maker(request,session_id,title):
+    # title=None
+
+    Chat_Title.objects.filter(user=request.user,chat_id=session_id).update(chat_title=title)
+
+
+
+def chat_title_checker(request):
+    a=Chat_Title.objects.all()
+    return render(request,"user/chat_title.html",{"data":a})

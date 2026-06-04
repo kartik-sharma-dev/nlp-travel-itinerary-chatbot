@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Conversations</title>
+</head>
+<body>
+    <h1>Conversation List</h1>
+
+    {% if con %}
+        <ul>
+            {% for c in con %}
+                <li>
+                    {{ c }}
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>No conversations found.</p>
+    {% endif %}
+
+</body>
+</html>

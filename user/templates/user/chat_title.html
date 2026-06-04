@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat Titles</title>
+
+    <style>
+        body{
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container{
+            max-width: 800px;
+            margin: auto;
+        }
+
+        h1{
+            text-align: center;
+            color: #333;
+        }
+
+        .chat-card{
+            background: white;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .chat-title{
+            font-size: 18px;
+            font-weight: bold;
+            color: #222;
+        }
+
+        .chat-id{
+            color: #666;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+
+        .chat-user{
+            color: #007bff;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+
+        .empty{
+            text-align: center;
+            color: gray;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Chat List</h1>
+
+    {% if data %}
+        {% for chat in data %}
+            <div class="chat-card">
+                <div class="chat-title">
+                    {{ chat.chat_title }}
+                </div>
+
+                <div class="chat-id">
+                    Chat ID: {{ chat.chat_id }}
+                </div>
+
+                <div class="chat-user">
+                    User: {{ chat.user }}
+                </div>
+            </div>
+        {% endfor %}
+    {% else %}
+        <p class="empty">No chats found.</p>
+    {% endif %}
+</div>
+
+</body>
+</html>

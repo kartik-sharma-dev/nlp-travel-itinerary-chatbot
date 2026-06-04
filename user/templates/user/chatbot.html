@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Chatbot</title>
+<title>AI Chatbot</title>
 
 <style>
 
@@ -15,22 +15,83 @@
 }
 
 body{
-    background:#f5f5f5;
     height:100vh;
-    display:flex;
-    justify-content:center;
-    align-items:center;
+    background:#f5f5f5;
+    overflow:hidden;
 }
 
-.chat-container{
-    width:800px;
-    height:90vh;
-    background:white;
-    border-radius:15px;
-    overflow:hidden;
+.app-container{
+    display:flex;
+    height:100vh;
+}
+
+/* ===========================
+   SIDEBAR
+=========================== */
+
+.sidebar{
+    width:280px;
+    background:#202123;
+    color:white;
     display:flex;
     flex-direction:column;
-    box-shadow:0 5px 20px rgba(0,0,0,0.15);
+}
+
+.sidebar-header{
+    padding:15px;
+    border-bottom:1px solid #444;
+}
+
+.new-chat-btn{
+    display:block;
+    width:100%;
+    padding:12px;
+    text-align:center;
+    text-decoration:none;
+    color:white;
+    background:#343541;
+    border-radius:8px;
+    transition:0.3s;
+}
+
+.new-chat-btn:hover{
+    background:#444654;
+}
+
+.chat-history{
+    flex:1;
+    overflow-y:auto;
+    padding:10px;
+}
+
+.history-item{
+    display:block;
+    padding:12px;
+    margin-bottom:8px;
+    text-decoration:none;
+    color:white;
+    background:#343541;
+    border-radius:8px;
+    transition:0.3s;
+}
+
+.history-item:hover{
+    background:#444654;
+}
+
+.history-item.active{
+    background:#667eea;
+}
+
+/* ===========================
+   CHAT SECTION
+=========================== */
+
+.chat-container{
+    flex:1;
+    display:flex;
+    flex-direction:column;
+    background:white;
 }
 
 .chat-header{
@@ -39,6 +100,13 @@ body{
     padding:18px;
     font-size:20px;
     font-weight:bold;
+}
+
+.status{
+    padding:8px 15px;
+    font-size:12px;
+    color:green;
+    border-bottom:1px solid #ddd;
 }
 
 .chat-body{
@@ -52,9 +120,10 @@ body{
 
 .message{
     max-width:75%;
-    padding:12px;
+    padding:12px 15px;
     border-radius:12px;
     word-wrap:break-word;
+    line-height:1.5;
 }
 
 .user-message{
@@ -85,7 +154,7 @@ body{
 }
 
 #sendBtn{
-    padding:12px 20px;
+    padding:12px 25px;
     border:none;
     border-radius:10px;
     background:#667eea;
@@ -97,10 +166,34 @@ body{
     opacity:0.9;
 }
 
-.status{
-    padding:8px;
-    font-size:12px;
-    color:green;
+/* ===========================
+   TYPING CURSOR EFFECT
+=========================== */
+
+.typing-cursor::after{
+    content:"|";
+    animation:blink 0.7s infinite;
+}
+
+@keyframes blink{
+    50%{
+        opacity:0;
+    }
+}
+
+/* ===========================
+   MOBILE
+=========================== */
+
+@media(max-width:768px){
+
+    .sidebar{
+        width:220px;
+    }
+
+    .message{
+        max-width:90%;
+    }
 }
 
 </style>
@@ -108,31 +201,70 @@ body{
 
 <body>
 
-<div class="chat-container">
+<div class="app-container">
 
-    <div class="chat-header">
-        AI Chatbot
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+
+        <div class="sidebar-header">
+            <a href="{% url 'exit_chat' %}" class="new-chat-btn">
+                + New Chat
+            </a>
+        </div>
+
+        <div class="chat-history">
+
+            {% for chat in all_chats %}
+                <a href="{% url 'history_based_on_session' chat.chat_id %}"
+                   class="history-item {% if current_chat.chat_id == chat.chat_id %}active{% endif %}">
+                    {{ chat.chat_title }}
+                </a>
+            {% empty %}
+                <div style="padding:10px;">
+                    No chats available
+                </div>
+            {% endfor %}
+
+        </div>
+
     </div>
 
-    <div class="status" id="status">
-        Connecting...
-    </div>
+    <!-- CHAT AREA -->
+    <div class="chat-container">
 
-    <div class="chat-body" id="chatBody">
+        <div class="chat-header">
+            {% if current_chat %}
+                {{ current_chat.chat_title }}
+            {% else %}
+                AI Chatbot
+            {% endif %}
+        </div>
 
-    </div>
+        <div class="status" id="status">
+            Connecting...
+        </div>
 
-    <div class="chat-footer">
+        <div class="chat-body" id="chatBody">
 
-        <input
-            type="text"
-            id="messageInput"
-            placeholder="Type your message..."
-        >
+            {% for msg in conversation %}
+                <div class="message user-message">
+                    {{ msg.user_message }}
+                </div>
 
-        <button id="sendBtn">
-            Send
-        </button>
+                <div class="message bot-message">
+                    {{ msg.bot_message }}
+                </div>
+            {% endfor %}
+
+        </div>
+
+        <div class="chat-footer">
+
+            <input type="text" id="messageInput" placeholder="Type your message...">
+
+            <button id="sendBtn">Send</button>
+
+        </div>
 
     </div>
 
@@ -145,36 +277,23 @@ const messageInput = document.getElementById("messageInput");
 const sendBtn = document.getElementById("sendBtn");
 const statusDiv = document.getElementById("status");
 
-/*
-Backend websocket URL
-Example:
-ws://127.0.0.1:8000/ws/chat/
-*/
-
-console.log("ws://" + window.location.host + "/ws/chat/")
-const socket = new WebSocket('ws://127.0.0.1:8000/ws/chat/');
-    
-    {% comment %} "ws://" + window.location.host + "/ws/chat/" {% endcomment %}
-let currentBotMessage = null;
+const CHAT_ID = "{{ current_chat.chat_id|default:'' }}";
+console.log(CHAT_ID)
+const socket = new WebSocket(
+    "ws://" + window.location.host + "/ws/chat/"
+);
 
 socket.onopen = function(){
-
     statusDiv.innerHTML = "Connected";
     statusDiv.style.color = "green";
-
-    console.log("Connected");
 };
 
 socket.onclose = function(){
-
     statusDiv.innerHTML = "Disconnected";
     statusDiv.style.color = "red";
-
-    console.log("Disconnected");
 };
 
 socket.onerror = function(error){
-
     console.log(error);
 };
 
@@ -182,55 +301,20 @@ socket.onmessage = function(event){
 
     const data = JSON.parse(event.data);
 
-    /*
-    Expected Backend Response:
-
-    {
-        "type":"message",
-        "message":"Hello User"
+    if(data.status === "success"){
+        addBotMessage(data.bot_response);
     }
-
-    OR
-
-    {
-        "type":"stream",
-        "token":"Hel"
-    }
-
-    {
-        "type":"stream",
-        "token":"lo"
-    }
-
-    {
-        "type":"stream_end"
-    }
-    */
-
-    if(data.type === "message"){
-
-        addBotMessage(data.message);
-    }
-
-    else if(data.type === "stream"){
-
-        streamBotToken(data.token);
-    }
-
-    else if(data.type === "stream_end"){
-
-        currentBotMessage = null;
+    else if(data.status === "error"){
+        addBotMessage("Error: " + data.message);
     }
 };
 
+// USER MESSAGE
 function addUserMessage(text){
 
     const div = document.createElement("div");
 
-    div.classList.add(
-        "message",
-        "user-message"
-    );
+    div.classList.add("message", "user-message");
 
     div.innerText = text;
 
@@ -239,50 +323,41 @@ function addUserMessage(text){
     scrollToBottom();
 }
 
+// BOT TYPEWRITER EFFECT
 function addBotMessage(text){
 
     const div = document.createElement("div");
 
-    div.classList.add(
-        "message",
-        "bot-message"
-    );
-
-    div.innerText = text;
+    div.classList.add("message", "bot-message", "typing-cursor");
 
     chatBody.appendChild(div);
 
-    scrollToBottom();
-}
+    let index = 0;
 
-function streamBotToken(token){
+    function typeWriter(){
 
-    if(!currentBotMessage){
+        if(index < text.length){
 
-        currentBotMessage =
-            document.createElement("div");
+            div.textContent += text.charAt(index);
 
-        currentBotMessage.classList.add(
-            "message",
-            "bot-message"
-        );
+            index++;
 
-        currentBotMessage.innerText = "";
+            scrollToBottom();
 
-        chatBody.appendChild(
-            currentBotMessage
-        );
+            setTimeout(typeWriter, 15);
+
+        } else {
+            div.classList.remove("typing-cursor");
+        }
     }
 
-    currentBotMessage.innerText += token;
-
-    scrollToBottom();
+    typeWriter();
 }
 
+// SEND MESSAGE
 function sendMessage(){
 
-    const message =
-        messageInput.value.trim();
+    const message = messageInput.value.trim();
 
     if(message === ""){
         return;
@@ -290,40 +365,27 @@ function sendMessage(){
 
     addUserMessage(message);
 
-    socket.send(
-        JSON.stringify({
-
-            message: message,
-
-            timestamp:
-                new Date().toISOString()
-
-        })
-    );
-
+    socket.send(JSON.stringify({
+        message: message,
+        chat_id: CHAT_ID
+    }));
+    console.log(CHAT_ID)
     messageInput.value = "";
 }
 
-sendBtn.addEventListener(
-    "click",
-    sendMessage
-);
+sendBtn.addEventListener("click", sendMessage);
 
-messageInput.addEventListener(
-    "keypress",
-    function(e){
-
-        if(e.key === "Enter"){
-            sendMessage();
-        }
+messageInput.addEventListener("keypress", function(e){
+    if(e.key === "Enter"){
+        sendMessage();
     }
-);
+});
 
 function scrollToBottom(){
-
-    chatBody.scrollTop =
-        chatBody.scrollHeight;
+    chatBody.scrollTop = chatBody.scrollHeight;
 }
+
+scrollToBottom();
 
 </script>
 

@@ -10,4 +10,7 @@ urlpatterns = [
     path("logout/", views.logout_view, name="logout"),
     path("exit/", views.exit_chat, name="exit_chat"),
     path("chat/", views.chatbot, name="chatbot"),
+    path("conversation/", views.conversation, name="conversation"),
+    path("chat/<str:session>/", views.history_based_on_session, name="history_based_on_session"),
+    path("chat_title/",views.chat_title_checker,name="chat"),
 ]
