@@ -87,8 +87,6 @@ def _run_correction(correction):
     session["pending_correction"] = None
     session["awaiting"] = None
     
-    # 4. Trigger the re-generation!
-    print(f"\n[DEBUG] Applying correction: {c_type} | Day {day} | Slot {slot}")
     return _run_itinerary()
 
 

@@ -5,6 +5,7 @@ from .nlp_bridge import get_response
 from .views import chat_title_maker
 from .helper_functions import remove_stopwords
 
+
 class ChatConsumer(WebsocketConsumer):
     def connect(self):
         # self.count=0
@@ -19,18 +20,23 @@ class ChatConsumer(WebsocketConsumer):
         print("Received:", text_data)
 
         data = json.loads(text_data)
+        action = data.get("action")
+        chat_id = data.get("chat_id")
+
+        if action == "update_title":
+            new_title = data.get("new_title", "").strip()
+            if new_title and chat_id:
+                Chat_Title.objects.filter(chat_id=chat_id).update(chat_title=new_title)
+                self.send(text_data=json.dumps({"status": "title_updated"}))
+            return
 
         message = data.get("message")
-        chat_id = data.get("chat_id")
-        title=remove_stopwords(message)
-        # title=None
-        # updating chat title according to first message
+
+        # update chat title from first message
         chat = Chat_Title.objects.get(chat_id=chat_id)
-        if chat.chat_title == "New Chat":
+        if chat.chat_title in ("New Chat", "first chat"):
             chat.chat_title = remove_stopwords(message)
             chat.save()
-        
-        
 
         print("MESSAGE:", message)
         print("CHAT ID:", chat_id)

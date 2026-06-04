@@ -342,19 +342,19 @@ def _extract_slots_from_query(query):
     try:
         q = query.lower()
 
-        loc_match = re.search(
-            r'\b(?:to|in|for|visit|at|near)\s+(?!(?:spend|plan|want|show|give|book|stay|travel)\b)([A-Za-z][a-z]+(?:\s[A-Za-z][a-z]+)?)',
+        direct_loc = re.search(
+            r'\b(?:new delhi|delhi|jaipur|agra|mumbai|bangalore|kolkata|chennai|hyderabad|pune|lucknow|varanasi|taj mahal|taj)\b',
             q
         )
-        if loc_match and not session["last_location"]:
-            session["last_location"] = loc_match.group(1).strip().title()
-        elif not session["last_location"]:
-            direct_loc = re.search(
-                r'\b(?:new delhi|delhi|jaipur|agra|mumbai|bangalore|kolkata|chennai|hyderabad|pune|lucknow|varanasi|taj mahal|taj)\b',
+        if direct_loc:
+            session["last_location"] = direct_loc.group(0).strip().title()
+        else:
+            loc_match = re.search(
+                r'\b(?:to|in|for|visit|at|near)\s+(?!(?:spend|plan|want|show|give|book|stay|travel)\b)([A-Za-z][a-z]+(?:\s[A-Za-z][a-z]+)?)',
                 q
             )
-            if direct_loc:
-                session["last_location"] = direct_loc.group(0).strip().title()
+            if loc_match:
+                session["last_location"] = loc_match.group(1).strip().title()
 
         day_match = re.search(r'\b(\d+)\s*(?:day|days|night|nights)\b', q)
         if day_match and not session["trip_days"]:

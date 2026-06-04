@@ -50,7 +50,6 @@ def resolve_location(query):
             print(f"  (Using last known location: {session['last_location']})")
             location_query = session["last_location"]
             
-        print(f"  [DEBUG] Final location used for search: '{location_query}'")
         return location_query
         
     except Exception as e:
@@ -92,8 +91,6 @@ def handle_greeting(query):
 
 def handle_hotel_query(query, data, hotel_df, vectorizer, tfidf_matrix):
     try:
-        print(f"\nUser Query: {query}")
-
         location_query = resolve_location(query)
         if not location_query:
             print("  Please specify a location to find hotels nearby (e.g. 'hotels near Goa').")
@@ -145,8 +142,6 @@ def handle_hotel_query(query, data, hotel_df, vectorizer, tfidf_matrix):
 
 def handle_restaurant_query(query, data, restaurant_df, vectorizer, tfidf_matrix):
     try:
-        print(f"\nUser Query: {query}")
-
         location_query = resolve_location(query)
         if not location_query:
             print("  Please specify a location to find restaurants nearby (e.g. 'restaurants in Mumbai').")
@@ -208,7 +203,6 @@ def clean_entity(text):
 
 def handle_distance_query(query, data, vectorizer, tfidf_matrix):
     try:
-        print(f"\nUser Query: {query}")
 
         entities = extract_entities_bio(query)
 
@@ -277,7 +271,6 @@ def find_nearest_in_df(lat, lon, df):
 
 def handle_itinerary_query(query, data, hotel_df, restaurant_df, vectorizer, tfidf_matrix):
     try:
-        print(f"\nUser Query: {query}")
 
         location_query = extract_itinerary_location(query)
         if not location_query:
@@ -433,7 +426,7 @@ def handle_location_query(query, data, vectorizer, tfidf_matrix):
             print(f"\n  Could not find a location matching '{query}'. Try a city or place name.")
             return None
 
-        session["last_location"] = query
+        session["last_location"] = best["location"]
 
         chain = build_chain(best, data, place_only=True)
 

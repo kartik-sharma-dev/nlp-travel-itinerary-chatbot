@@ -3,6 +3,7 @@ from django.shortcuts import render
 # Create your views here.
 from django.shortcuts import render, redirect
 from django.contrib.auth import logout,authenticate, login
+from django.contrib.auth.decorators import login_required
 from .models import *
 from .helper_functions import *
 from django.contrib import messages
@@ -75,7 +76,7 @@ def login_view(request):
             login(request, user)
             session_id=generating_session_id()
             Chat_Title.objects.create(
-                user=user,chat_id=session_id,chat_title="Not avaibable")
+                user=user,chat_id=session_id,chat_title="first chat")
             
             messages.success(request, "Login successful.")
             return redirect("chatbot")
@@ -94,6 +95,7 @@ def logout_view(request):
 
 
 
+@login_required(login_url="login")
 def chatbot(request):
 
     current_chat = Chat_Title.objects.filter(
