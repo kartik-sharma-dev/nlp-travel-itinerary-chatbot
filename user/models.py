@@ -25,6 +25,9 @@ class Conversation(models.Model):
     chat_id=models.ForeignKey(Chat_Title, on_delete=models.CASCADE)
     user_message=models.TextField()
     bot_message=models.TextField()    
+
+    def __str__(self):
+        return f"Chat {self.chat_id.chat_id}: {self.user_message[:20]}..."
     
 class ChatSession(models.Model):
     session_key = models.CharField(max_length=255, unique=True)

@@ -35,3 +35,7 @@ Thumbs.db
 
 # spaCy model cache
 __pycache__/
+
+# 
+*.sqlite3
+*.db
