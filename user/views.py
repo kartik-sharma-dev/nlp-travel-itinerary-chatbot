@@ -6,6 +6,7 @@ from django.contrib.auth import logout,authenticate, login
 from django.contrib.auth.decorators import login_required
 from .models import *
 from .helper_functions import *
+from .nlp_bridge import get_response
 from django.contrib import messages
 import random
 
@@ -89,9 +90,6 @@ def login_view(request):
 
 
 
-def logout_view(request):
-    logout(request)
-    return redirect("login")
 
 
 
@@ -108,7 +106,7 @@ def chatbot(request):
 
         if user_message:
 
-            bot_reply = "You said: " + user_message
+            bot_reply = get_response(user_message)
 
             Conversation.objects.create(
                 chat_id=current_chat,
@@ -162,7 +160,7 @@ def history_based_on_session(request, session):
     if request.method == "POST":
         user_message = request.POST.get("message")
         if user_message:
-            bot_reply = "You said: " + user_message
+            bot_reply = get_response(user_message)
             Conversation.objects.create(chat_id=chat,user_message=user_message,bot_message=bot_reply)
         return redirect("history_based_on_session",session=session)
     conversation = Conversation.objects.filter(chat_id=chat)
@@ -180,3 +178,8 @@ def chat_title_maker(request,session_id,title):
 def chat_title_checker(request):
     a=Chat_Title.objects.all()
     return render(request,"user/chat_title.html",{"data":a})
+
+def logout_view(request):
+    logout(request)
+    request.session.flush() 
+    return redirect("login")

@@ -1,4 +1,5 @@
 import spacy
+import re
 
 number_words = {
     'one': '1', 'two': '2', 'three': '3', 'four': '4',
@@ -16,11 +17,16 @@ def preprocess(text):
     try:
         if not isinstance(text, str):
             text = str(text)
+            
+        # Safely replace number words using word boundaries
+        text_lower = text.lower()
         for word, num in number_words.items():
-            text = text.replace(word, num)
+            text_lower = re.sub(rf'\b{word}\b', num, text_lower)
+            
         if nlp is None:
             raise RuntimeError("spaCy model is not loaded.")
-        doc = nlp(text)
+            
+        doc = nlp(text_lower)
         tokens = []
         for token in doc:
             if token.is_stop or token.is_punct:
@@ -29,6 +35,7 @@ def preprocess(text):
                 tokens.append(token.text)
             elif not token.is_stop:
                 tokens.append(token.text)
+                
         return " ".join(tokens)
     except Exception as e:
         print(f"Error in preprocess: {e}")

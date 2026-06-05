@@ -1,14 +1,14 @@
 from channels.generic.websocket import WebsocketConsumer
 from .models import Conversation, Chat_Title
 import json
-from .nlp_bridge import get_response
+from .nlp_bridge import get_response, _new_session
 from .views import chat_title_maker
 from .helper_functions import remove_stopwords
 
 
 class ChatConsumer(WebsocketConsumer):
     def connect(self):
-        # self.count=0
+        self.bot_session = _new_session()
         print("connected")
         self.accept()
 
@@ -41,7 +41,7 @@ class ChatConsumer(WebsocketConsumer):
         print("MESSAGE:", message)
         print("CHAT ID:", chat_id)
 
-        bot_response = get_response(message)
+        bot_response = get_response(message, self.bot_session)
 
         try:
 
