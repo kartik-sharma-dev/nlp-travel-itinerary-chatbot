@@ -183,3 +183,9 @@ def logout_view(request):
     logout(request)
     request.session.flush() 
     return redirect("login")
+
+
+
+def delete_session(request,session_id):
+    Chat_Title.objects.filter(chat_id=session_id).delete() 
+    return redirect("chatbot")   

@@ -59,3 +59,4 @@ def chat_title_edit(request,old_title,new_title):
     # title=None
 
     Chat_Title.objects.filter(user=request.user,title=old_title).update(chat_title=new_title)
+

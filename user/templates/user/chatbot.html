@@ -18,6 +18,8 @@
     --text-dark: #1f2937;
     --text-muted: #6b7280;
     --border-color: #e5e7eb;
+    --danger: #ef4444;
+    --danger-hover: #dc2626;
     --radius-lg: 16px;
     --radius-md: 12px;
 }
@@ -56,6 +58,9 @@ body {
 .sidebar-header {
     padding: 20px;
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
 }
 
 .new-chat-btn {
@@ -72,10 +77,34 @@ body {
     border-radius: var(--radius-md);
     font-weight: 500;
     transition: all 0.2s ease;
+    cursor: pointer;
 }
 
 .new-chat-btn:hover {
     background: rgba(255, 255, 255, 0.15);
+}
+
+.logout-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    padding: 10px;
+    text-decoration: none;
+    color: #fca5a5;
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.25);
+    border-radius: var(--radius-md);
+    font-weight: 500;
+    font-size: 0.9rem;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.logout-btn:hover {
+    background: rgba(239, 68, 68, 0.2);
+    color: #fecaca;
 }
 
 .chat-history {
@@ -84,30 +113,70 @@ body {
     padding: 15px;
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 6px;
 }
 
-.history-item {
-    display: block;
-    padding: 12px 15px;
-    text-decoration: none;
-    color: var(--sidebar-text);
+/* Each history row = link + delete button side by side */
+.history-row {
+    display: flex;
+    align-items: center;
+    gap: 4px;
     border-radius: var(--radius-md);
-    font-size: 0.95rem;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    transition: all 0.2s ease;
+    transition: background 0.2s;
 }
 
-.history-item:hover {
+.history-row:hover {
     background: var(--sidebar-hover);
 }
 
-.history-item.active {
-    background: var(--sidebar-active);
+.history-row:hover .delete-session-btn {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.history-item {
+    flex: 1;
+    padding: 11px 12px;
+    text-decoration: none;
+    color: var(--sidebar-text);
+    border-radius: var(--radius-md);
+    font-size: 0.92rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    transition: color 0.2s;
+}
+
+.history-row.active .history-item {
     color: white;
     font-weight: 500;
+}
+
+.history-row.active {
+    background: var(--sidebar-active);
+}
+
+.delete-session-btn {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    background: transparent;
+    border: none;
+    border-radius: 8px;
+    color: #9ca3af;
+    cursor: pointer;
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.2s ease;
+    margin-right: 6px;
+}
+
+.delete-session-btn:hover {
+    background: rgba(239, 68, 68, 0.2);
+    color: #f87171;
 }
 
 /* ===========================
@@ -279,7 +348,7 @@ body {
 #sendBtn svg {
     width: 18px;
     height: 18px;
-    margin-left: 2px; /* slight visual center adjustment */
+    margin-left: 2px;
 }
 
 /* ===========================
@@ -298,6 +367,111 @@ body {
 }
 
 /* ===========================
+   CONFIRM MODAL
+=========================== */
+.modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-overlay.active {
+    display: flex;
+}
+
+.modal-box {
+    background: #fff;
+    border-radius: 16px;
+    padding: 28px 32px;
+    max-width: 400px;
+    width: 90%;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+    animation: modalIn 0.2s ease;
+}
+
+@keyframes modalIn {
+    from { opacity: 0; transform: scale(0.93) translateY(-8px); }
+    to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.modal-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: #fee2e2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 16px;
+}
+
+.modal-icon svg {
+    width: 22px;
+    height: 22px;
+    color: var(--danger);
+}
+
+.modal-box h3 {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--text-dark);
+    margin-bottom: 8px;
+}
+
+.modal-box p {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    line-height: 1.5;
+    margin-bottom: 24px;
+}
+
+.modal-box p strong {
+    color: var(--text-dark);
+}
+
+.modal-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+}
+
+.btn-cancel {
+    padding: 9px 20px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    background: #fff;
+    color: var(--text-dark);
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.btn-cancel:hover {
+    background: var(--bot-msg);
+}
+
+.btn-delete {
+    padding: 9px 20px;
+    border-radius: 8px;
+    border: none;
+    background: var(--danger);
+    color: #fff;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.btn-delete:hover {
+    background: var(--danger-hover);
+}
+
+/* ===========================
    MOBILE
 =========================== */
 @media(max-width: 768px) {
@@ -307,7 +481,7 @@ body {
     .chat-body { padding: 15px; }
 }
 @media(max-width: 480px) {
-    .sidebar { display: none; /* Consider adding a hamburger menu for mobile */ }
+    .sidebar { display: none; }
     .message { max-width: 95%; }
 }
 </style>
@@ -323,14 +497,29 @@ body {
                 <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
                 New Chat
             </a>
+            <a href="{% url 'logout' %}" class="logout-btn">
+                <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h6a2 2 0 012 2v1"></path></svg>
+                Logout
+            </a>
         </div>
 
         <div class="chat-history">
             {% for chat in all_chats %}
-                <a href="{% url 'history_based_on_session' chat.chat_id %}"
-                   class="history-item {% if current_chat.chat_id == chat.chat_id %}active{% endif %}">
-                    {{ chat.chat_title }}
-                </a>
+                <div class="history-row {% if current_chat.chat_id == chat.chat_id %}active{% endif %}">
+                    <a href="{% url 'history_based_on_session' chat.chat_id %}" class="history-item">
+                        {{ chat.chat_title }}
+                    </a>
+                    <button
+                        class="delete-session-btn"
+                        title="Delete this chat"
+                        onclick="confirmDelete('{{ chat.chat_id }}', '{{ chat.chat_title|escapejs }}')"
+                    >
+                        <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                        </svg>
+                    </button>
+                </div>
             {% empty %}
                 <div style="padding:10px; color: var(--text-muted); font-size: 0.9rem; text-align: center;">
                     No chats available
@@ -382,6 +571,26 @@ body {
 
 </div>
 
+<!-- ===========================
+     DELETE CONFIRM MODAL
+=========================== -->
+<div class="modal-overlay" id="deleteModal">
+    <div class="modal-box">
+        <div class="modal-icon">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+            </svg>
+        </div>
+        <h3>Delete Conversation?</h3>
+        <p>You are about to delete <strong id="modalChatTitle"></strong>. This action cannot be undone.</p>
+        <div class="modal-actions">
+            <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+            <button class="btn-delete" id="confirmDeleteBtn">Delete</button>
+        </div>
+    </div>
+</div>
+
 <script>
 // Chat elements
 const chatBody = document.getElementById("chatBody");
@@ -403,7 +612,7 @@ const socket = new WebSocket("ws://" + window.location.host + "/ws/chat/");
 socket.onopen = function(){
     statusDiv.innerHTML = "Connected";
     statusDiv.className = "status connected";
-    setTimeout(() => { statusDiv.style.display = "none"; }, 2000); // Hide after 2s
+    setTimeout(() => { statusDiv.style.display = "none"; }, 2000);
 };
 
 socket.onclose = function(){
@@ -418,11 +627,9 @@ socket.onerror = function(error){
 
 socket.onmessage = function(event){
     const data = JSON.parse(event.data);
-
     if(data.status === "success"){
         addBotMessage(data.bot_response);
-    }
-    else if(data.status === "error"){
+    } else if(data.status === "error"){
         addBotMessage("Error: " + data.message);
     }
 };
@@ -462,52 +669,41 @@ function sendMessage(){
     if(message === "") return;
 
     addUserMessage(message);
-
     socket.send(JSON.stringify({
-        action: "chat_message", // Added explicit action typing for backend parsing
+        action: "chat_message",
         message: message,
         chat_id: CHAT_ID
     }));
-    
     messageInput.value = "";
 }
 
 sendBtn.addEventListener("click", sendMessage);
 messageInput.addEventListener("keypress", function(e){
-    if(e.key === "Enter"){
-        sendMessage();
-    }
+    if(e.key === "Enter") sendMessage();
 });
 
 function scrollToBottom(){
     chatBody.scrollTop = chatBody.scrollHeight;
 }
 
-// Initial scroll
 scrollToBottom();
-
 
 // ===========================
 // EDIT TITLE FUNCTIONALITY
 // ===========================
 if (editTitleBtn && chatTitleText && chatTitleInput) {
-    
-    // Switch to edit mode
     editTitleBtn.addEventListener("click", () => {
         chatTitleText.style.display = "none";
         editTitleBtn.style.display = "none";
         chatTitleInput.style.display = "block";
         chatTitleInput.focus();
-        // Place cursor at the end
         chatTitleInput.selectionStart = chatTitleInput.selectionEnd = chatTitleInput.value.length;
     });
 
-    // Save on Enter
     chatTitleInput.addEventListener("keypress", (e) => {
         if(e.key === "Enter") saveTitle();
     });
 
-    // Save on losing focus (clicking away)
     chatTitleInput.addEventListener("blur", saveTitle);
 
     function saveTitle() {
@@ -516,13 +712,9 @@ if (editTitleBtn && chatTitleText && chatTitleInput) {
         if(newTitle && newTitle !== chatTitleText.innerText) {
             chatTitleText.innerText = newTitle;
 
-            // Update the active sidebar history item in real-time
-            const activeHistoryItem = document.querySelector('.history-item.active');
-            if(activeHistoryItem) {
-                activeHistoryItem.textContent = newTitle;
-            }
+            const activeHistoryItem = document.querySelector('.history-row.active .history-item');
+            if(activeHistoryItem) activeHistoryItem.textContent = newTitle;
 
-            // Send the title update to the backend
             if(socket.readyState === WebSocket.OPEN) {
                 socket.send(JSON.stringify({
                     action: "update_title",
@@ -531,16 +723,50 @@ if (editTitleBtn && chatTitleText && chatTitleInput) {
                 }));
             }
         } else {
-            // Revert input value if empty
             chatTitleInput.value = chatTitleText.innerText;
         }
 
-        // Switch back to view mode
         chatTitleInput.style.display = "none";
         chatTitleText.style.display = "inline-block";
         editTitleBtn.style.display = "flex";
     }
 }
+
+// ===========================
+// DELETE SESSION MODAL
+// ===========================
+const deleteModal = document.getElementById("deleteModal");
+const modalChatTitle = document.getElementById("modalChatTitle");
+const confirmDeleteBtn = document.getElementById("confirmDeleteBtn");
+
+let pendingDeleteUrl = null;
+
+function confirmDelete(sessionId, chatTitle) {
+    modalChatTitle.textContent = '"' + chatTitle + '"';
+    pendingDeleteUrl = "{% url 'delete_session' '00000000' %}".replace("00000000", sessionId);
+    deleteModal.classList.add("active");
+}
+
+function closeModal() {
+    deleteModal.classList.remove("active");
+    pendingDeleteUrl = null;
+}
+
+confirmDeleteBtn.addEventListener("click", function() {
+    if (pendingDeleteUrl) {
+        window.location.href = pendingDeleteUrl;
+    }
+});
+
+// Close modal if clicking outside the box
+deleteModal.addEventListener("click", function(e) {
+    if (e.target === deleteModal) closeModal();
+});
+
+// Close modal on Escape key
+document.addEventListener("keydown", function(e) {
+    if (e.key === "Escape") closeModal();
+});
 </script>
 
 </body>
