@@ -472,6 +472,37 @@ body {
 }
 
 /* ===========================
+   SIDEBAR FOOTER
+=========================== */
+.sidebar-footer {
+    padding: 14px 20px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.clear-all-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    padding: 10px;
+    background: transparent;
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    border-radius: var(--radius-md);
+    color: #9ca3af;
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.clear-all-btn:hover {
+    background: rgba(239, 68, 68, 0.12);
+    border-color: rgba(239, 68, 68, 0.4);
+    color: #f87171;
+}
+
+/* ===========================
    MOBILE
 =========================== */
 @media(max-width: 768px) {
@@ -525,6 +556,16 @@ body {
                     No chats available
                 </div>
             {% endfor %}
+        </div>
+
+        <div class="sidebar-footer">
+            <button class="clear-all-btn" onclick="confirmClearAll()">
+                <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                </svg>
+                Clear All Chats
+            </button>
         </div>
     </div>
 
@@ -587,6 +628,28 @@ body {
         <div class="modal-actions">
             <button class="btn-cancel" onclick="closeModal()">Cancel</button>
             <button class="btn-delete" id="confirmDeleteBtn">Delete</button>
+        </div>
+    </div>
+</div>
+
+<!-- ===========================
+     CLEAR ALL CONFIRM MODAL
+=========================== -->
+<div class="modal-overlay" id="clearAllModal">
+    <div class="modal-box">
+        <div class="modal-icon">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+            </svg>
+        </div>
+        <h3>Clear All Chats?</h3>
+        <p>This will permanently delete <strong>all your conversations</strong>. This action cannot be undone.</p>
+        <div class="modal-actions">
+            <button class="btn-cancel" onclick="closeClearAllModal()">Cancel</button>
+            <a href="{% url 'delete_all' %}" class="btn-delete" style="text-decoration:none; display:inline-flex; align-items:center;">
+                Clear All
+            </a>
         </div>
     </div>
 </div>
@@ -765,7 +828,27 @@ deleteModal.addEventListener("click", function(e) {
 
 // Close modal on Escape key
 document.addEventListener("keydown", function(e) {
-    if (e.key === "Escape") closeModal();
+    if (e.key === "Escape") {
+        closeModal();
+        closeClearAllModal();
+    }
+});
+
+// ===========================
+// CLEAR ALL MODAL
+// ===========================
+const clearAllModal = document.getElementById("clearAllModal");
+
+function confirmClearAll() {
+    clearAllModal.classList.add("active");
+}
+
+function closeClearAllModal() {
+    clearAllModal.classList.remove("active");
+}
+
+clearAllModal.addEventListener("click", function(e) {
+    if (e.target === clearAllModal) closeClearAllModal();
 });
 </script>
 

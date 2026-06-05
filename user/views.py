@@ -189,3 +189,7 @@ def logout_view(request):
 def delete_session(request,session_id):
     Chat_Title.objects.filter(chat_id=session_id).delete() 
     return redirect("chatbot")   
+
+def delete_all(request):
+    Chat_Title.objects.filter(user=request.user).delete()
+    return redirect("chatbot")

@@ -14,4 +14,5 @@ urlpatterns = [
     path("chat/<str:session>/", views.history_based_on_session, name="history_based_on_session"),
     path("chat_title/",views.chat_title_checker,name="chat"),
     path('delete-session/<str:session_id>/',views.delete_session,name='delete_session'),
+    path("delete_all_session/",views.delete_all,name="delete_all"),
 ]
