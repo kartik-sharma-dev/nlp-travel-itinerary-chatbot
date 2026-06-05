@@ -3,11 +3,16 @@ import re
 _kw_cache: dict = {}
 
 def _kw_matches(kw: str, q: str) -> bool:
-    """Left-word-boundary match: keyword must START at a word boundary.
-    This stops 'hi' matching inside 'delhi' while still letting
-    'hotel' match 'hotels' and 'restaurant' match 'restaurants'."""
+    """Word-boundary match for keywords.
+    Short keywords (≤3 chars) use FULL boundaries so 'yo' never matches 'you',
+    'hi' never matches 'him', 'hy' never matches 'hyderabad', 'yes' never matches
+    'yesterday'. Longer keywords keep left-only boundary so 'hotel' still matches
+    'hotels' and 'restaurant' still matches 'restaurants'."""
     if kw not in _kw_cache:
-        _kw_cache[kw] = re.compile(rf'\b{re.escape(kw)}', re.IGNORECASE)
+        if len(kw) <= 3:
+            _kw_cache[kw] = re.compile(rf'\b{re.escape(kw)}\b', re.IGNORECASE)
+        else:
+            _kw_cache[kw] = re.compile(rf'\b{re.escape(kw)}', re.IGNORECASE)
     return bool(_kw_cache[kw].search(q))
 
 
@@ -269,7 +274,16 @@ INTENTS = {
         "switch to a beach destination",
         "somewhere in south india",
         "somewhere different",
-        "what about instead"
+        "what about instead",
+        "i am in",
+        "i'm in",
+        "i am at",
+        "i'm at",
+        "currently in",
+        "we are in",
+        "we're in",
+        "planning to visit",
+        "want to explore",
     ],
 
     "restart": [

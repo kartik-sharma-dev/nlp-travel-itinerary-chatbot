@@ -100,6 +100,13 @@ def chatbot(request):
         user=request.user
     ).last()
 
+    if current_chat is None:
+        current_chat = Chat_Title.objects.create(
+            user=request.user,
+            chat_id=generating_session_id(),
+            chat_title="New Chat"
+        )
+
     if request.method == "POST":
 
         user_message = request.POST.get("message")

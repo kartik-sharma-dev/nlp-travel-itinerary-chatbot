@@ -12,8 +12,18 @@ def calculate_similarity(query, target):
         target_tokens = target.split()
         scores = []
         for t in target_tokens:
-            bestmatch = max([fuzz.ratio(t, q) for q in query_tokens]) if query_tokens else 0
-            scores.append(bestmatch)
+            if not query_tokens:
+                scores.append(0)
+                continue
+            best_q = max(query_tokens, key=lambda q: fuzz.ratio(t, q))
+            raw    = fuzz.ratio(t, best_q)
+            # Penalise length mismatch (squared): prevents "shimla" from falsely
+            # matching "hiroshima" via shared substrings "shim"/"him".
+            # Exact-length pairs (lr=1) are unaffected; 6-vs-9 char pairs lose ~55%.
+            max_len = max(len(t), len(best_q))
+            min_len = min(len(t), len(best_q))
+            lr2 = (min_len / max_len) ** 2 if max_len > 0 else 0
+            scores.append(raw * lr2)
         return sum(scores) / len(scores) if scores else 0
     except Exception as e:
         print(f"Error in calculate_similarity: {e}")

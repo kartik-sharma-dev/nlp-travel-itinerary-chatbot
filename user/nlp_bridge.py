@@ -9,23 +9,8 @@ if CODE2_DIR not in sys.path:
 
 from load_location_data import load_all_data
 from query_utils import extract_itinerary_location, extract_days, extract_budget
-from detect_intent import (
-    session as _new_session,
-    detect_intent,
-    reset_session,
-    get_missing_info,
-    fill_slot,
-    is_correction_query,
-    handle_correction_followup,
-)
-from handlers import (
-    handle_hotel_query,
-    handle_restaurant_query,
-    handle_distance_query,
-    handle_location_query,
-    handle_itinerary_query,
-    handle_greeting,
-)
+from detect_intent import (session as _new_session,detect_intent,reset_session,get_missing_info,fill_slot,is_correction_query,handle_correction_followup,)
+from handlers import ( handle_hotel_query,handle_restaurant_query,handle_distance_query,handle_location_query,handle_itinerary_query,handle_greeting,)
 
 # Load your data and ML models
 data, hotel_df, restaurant_df, landmark_df, vectorizer, tfidf_matrix = load_all_data()
@@ -224,6 +209,25 @@ def get_response(query: str, user_session=None) -> str:
             _session["state"] = "finalized"
             dest = _session['collected']['destination'] or "your destination"
             return f"Awesome! Have a wonderful trip to {dest}! Let me know if you want to plan another one."
+
+        elif intent == "build_itinerary":
+            new_loc  = extract_itinerary_location(query)
+            new_days = extract_days(query)
+            new_bud  = extract_budget(query)
+            _session["collected"]["destination"] = new_loc.title() if new_loc else None
+            _session["last_location"]            = new_loc.title() if new_loc else None
+            _session["collected"]["days"]        = new_days
+            _session["trip_days"]                = new_days
+            if new_bud:
+                _session["collected"]["budget"]      = new_bud
+                _session["preferences"]["budget"]    = new_bud
+            _session["state"] = "collecting_info"
+            if not new_loc:
+                return "Where would you like to travel?"
+            if not new_days:
+                return "How many days are you planning?"
+            _session["state"] = "reviewing"
+            return _run_itinerary(_session)
 
     # ---------------------------------------------------------
     # STATE 4: FINALIZED — trip confirmed, offer to start fresh

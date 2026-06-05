@@ -79,6 +79,31 @@ INDIA_LOCATIONS = {
     'ujjain': 'Mahakaleshwar Jyotirlinga',
     'gwalior': 'Gwalior Fort',
     'jabalpur': 'Bhedaghat Marble Rocks',
+    # Himachal Pradesh
+    'shimla': 'Shimla',
+    'manali': 'Manali',
+    'dharamsala': 'Dharamsala',
+    'mcleod ganj': 'Dharamsala',
+    'kasol': 'Kasol',
+    'kullu': 'Kullu Valley',
+    'spiti': 'Spiti Valley',
+    # Uttarakhand
+    'mussoorie': 'Mussoorie',
+    'dehradun': 'Dehradun',
+    'haridwar': 'Haridwar',
+    'rishikesh': 'Rishikesh',
+    'nainital': 'Nainital',
+    # Jammu & Kashmir / Ladakh
+    'srinagar': 'Dal Lake Srinagar',
+    'leh': 'Leh',
+    'ladakh': 'Leh',
+    # Northeast India
+    'shillong': 'Shillong',
+    'gangtok': 'Gangtok',
+    # Andhra Pradesh / Telangana
+    'hyderabad': 'Hyderabad',
+    'visakhapatnam': 'Visakhapatnam',
+    'vizag': 'Visakhapatnam',
     # Famous landmarks (direct)
     'taj mahal': 'Taj Mahal',
     'taj': 'Taj Mahal',
@@ -185,6 +210,9 @@ def extract_itinerary_location(query):
 
         result = re.sub(r'\s+', ' ', q).strip()
 
+        # Strip leftover leading prepositions after phrase removal ("for shimla" → "shimla")
+        result = re.sub(r'^(?:for|to|in|at|near|around|from|on|about)\s+', '', result).strip()
+
         # Discard results that are only filler / stop words with no actual place name
         _FILLER = {
             'i', 'want', 'to', 'go', 'am', 'the', 'a', 'an', 'at', 'in', 'for',
@@ -192,6 +220,9 @@ def extract_itinerary_location(query):
             'we', 'us', 'change', 'destination', 'somewhere', 'different',
             'some', 'is', 'are', 'was', 'be', 'do', 'did', 'does', 'its',
             'holiday', 'vacation', 'have', 'thinking', 'of', 'going', 'travel',
+            'you', 'can', 'so', 'could', 'would', 'should', 'hey', 'ok',
+            'okay', 'get', 'build', 'make', 'show', 'create', 'give', 'just',
+            'your', 'tell', 'what', 'where', 'when', 'how', 'with', 'and',
         }
         words = result.lower().split()
         if not words or all(w in _FILLER for w in words):

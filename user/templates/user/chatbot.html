@@ -367,6 +367,38 @@ body {
 }
 
 /* ===========================
+   TYPING / LOADING INDICATOR
+=========================== */
+.typing-indicator {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 14px 18px;
+    background: var(--bot-msg);
+    border-radius: var(--radius-lg);
+    border-bottom-left-radius: 4px;
+    align-self: flex-start;
+    max-width: 70%;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+
+.typing-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--text-muted);
+    animation: typingBounce 1.2s infinite ease-in-out;
+}
+
+.typing-dot:nth-child(2) { animation-delay: 0.2s; }
+.typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes typingBounce {
+    0%, 60%, 100% { transform: translateY(0); opacity: 0.35; }
+    30%            { transform: translateY(-7px); opacity: 1; }
+}
+
+/* ===========================
    CONFIRM MODAL
 =========================== */
 .modal-overlay {
@@ -689,6 +721,7 @@ socket.onerror = function(error){
 };
 
 socket.onmessage = function(event){
+    removeTypingIndicator();
     const data = JSON.parse(event.data);
     if(data.status === "success"){
         addBotMessage(data.bot_response);
@@ -727,6 +760,27 @@ function addBotMessage(text){
     typeWriter();
 }
 
+function showTypingIndicator(){
+    const el = document.createElement("div");
+    el.classList.add("typing-indicator");
+    el.id = "typingIndicator";
+    el.innerHTML = '<div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>';
+    chatBody.appendChild(el);
+    scrollToBottom();
+    sendBtn.disabled = true;
+    messageInput.disabled = true;
+    sendBtn.style.opacity = "0.45";
+}
+
+function removeTypingIndicator(){
+    const el = document.getElementById("typingIndicator");
+    if(el) el.remove();
+    sendBtn.disabled = false;
+    messageInput.disabled = false;
+    sendBtn.style.opacity = "";
+    messageInput.focus();
+}
+
 function sendMessage(){
     const message = messageInput.value.trim();
     if(message === "") return;
@@ -738,6 +792,7 @@ function sendMessage(){
         chat_id: CHAT_ID
     }));
     messageInput.value = "";
+    showTypingIndicator();
 }
 
 sendBtn.addEventListener("click", sendMessage);

@@ -1,6 +1,9 @@
+import csv
 import math
+import os
 import numpy as np
 import pandas as pd
+import requests
 from sklearn.metrics.pairwise import cosine_similarity
 from preprocess import preprocess
 from query_utils import extract_location, extract_entities_bio, extract_days, extract_budget, extract_itinerary_location
@@ -29,6 +32,49 @@ _NOISE_WORDS = {
     "night", "nights", "stay", "budget", "rupees", "rs", "inr", "₹",
     "places", "place", "dining", "cafe", "diner", "bistro"
 }
+
+
+_CSV_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "Data", "real_landmark_locations.csv")
+
+def save_geocoded_to_csv(name, lat, lon):
+    """Append a geocoded place to the CSV so the next session indexes it directly."""
+    try:
+        with open(_CSV_PATH, mode='a', newline='', encoding='utf-8') as f:
+            csv.writer(f).writerow([name.title(), name.title(), "NA", "NA", lon, lat, "place", "NA", "NA"])
+        print(f"  Saved '{name.title()}' to dataset for future sessions.")
+    except Exception as e:
+        print(f"  Warning: could not save '{name}' to CSV: {e}")
+
+
+def get_lat_lon(location):
+    """Fetch lat/lon from Nominatim for any place name not in the dataset."""
+    url = "https://nominatim.openstreetmap.org/search"
+    params = {"q": location, "format": "json", "limit": 1}
+    headers = {"User-Agent": "BestLocationFinder/1.0"}
+    try:
+        response = requests.get(url, params=params, headers=headers, timeout=5)
+        response.raise_for_status()
+        result = response.json()
+        if not result:
+            return None, None
+        return float(result[0]["lat"]), float(result[0]["lon"])
+    except Exception:
+        return None, None
+
+
+def _make_geocoded_row(name, lat, lon):
+    """Build a minimal Series row from geocoded coords for distance calculations."""
+    return pd.Series({
+        "location": name.title(),
+        "landmark": name.title(),
+        "state": "Unknown",
+        "country": "Unknown",
+        "lat_location": lat,
+        "lon_location": lon,
+        "ratings": "N/A",
+        "total_reviews": "N/A",
+        "final_score": 100,
+    })
 
 
 def fmt_coord(val):
@@ -326,11 +372,22 @@ def handle_distance_query(query, data, vectorizer, tfidf_matrix, session):
         place_b = ranked_b.iloc[0]
 
         if place_a["final_score"] < 20:
-            print(f"  '{entity_a}' was not found in our database. Try a different place name.")
-            return None
+            print(f"  '{entity_a}' not in database — looking up coordinates online...")
+            lat, lon = get_lat_lon(entity_a)
+            if lat is None:
+                print(f"  Could not locate '{entity_a}'. Try a different place name.")
+                return None
+            save_geocoded_to_csv(entity_a, lat, lon)
+            place_a = _make_geocoded_row(entity_a, lat, lon)
+
         if place_b["final_score"] < 20:
-            print(f"  '{entity_b}' was not found in our database. Try a different place name.")
-            return None
+            print(f"  '{entity_b}' not in database — looking up coordinates online...")
+            lat, lon = get_lat_lon(entity_b)
+            if lat is None:
+                print(f"  Could not locate '{entity_b}'. Try a different place name.")
+                return None
+            save_geocoded_to_csv(entity_b, lat, lon)
+            place_b = _make_geocoded_row(entity_b, lat, lon)
 
         if pd.isna(place_a["lat_location"]) or pd.isna(place_a["lon_location"]):
             print(f"  No coordinates available for '{place_a['location']}'.")
@@ -469,9 +526,25 @@ def handle_itinerary_query(query, data, hotel_df, restaurant_df, vectorizer, tfi
 
         best = ranked.iloc[0]
 
-        if best["final_score"] < 20:
-            print(f"\n  '{location_query}' was not found in our database. Try a city or place name.")
-            return None
+        if best["final_score"] < 36:
+            print(f"\n  '{location_query}' not in database — looking up coordinates online...")
+            lat, lon = get_lat_lon(location_query)
+            if lat is not None:
+                save_geocoded_to_csv(location_query, lat, lon)
+                nearest, ndist = find_nearest_in_df(lat, lon, data[data['type'] == 'place'])
+                if nearest is None:
+                    nearest, ndist = find_nearest_in_df(lat, lon, data)
+                if nearest is not None and ndist is not None and ndist <= 300:
+                    ranked = score_and_rank(preprocess(nearest['location']), data, vectorizer, tfidf_matrix)
+                    best = ranked.iloc[0]
+                elif nearest is not None:
+                    print(f"\n  '{location_query}' was geocoded but no destinations in our database are nearby.")
+                    print(f"  Nearest available: {nearest['location']} (~{ndist:.0f} km away).")
+                    print(f"  '{location_query}' has been saved — restart the app to use it directly.")
+                    return None
+            if best["final_score"] < 36:
+                print(f"\n  '{location_query}' was not found. Try a city or place name.")
+                return None
 
         state_places = ranked[(ranked['state'] == best['state']) & (ranked['type'] == 'place')]
         if state_places.empty:
@@ -594,9 +667,25 @@ def handle_location_query(query, data, vectorizer, tfidf_matrix, session):
         ranked    = score_and_rank(processed, filtered_data, vectorizer, tfidf_matrix)
         best      = ranked.iloc[0]
 
-        if best["final_score"] < 20:
-            print(f"\n  '{query}' was not found in our database. Try a city or place name.")
-            return None
+        if best["final_score"] < 36:
+            print(f"\n  '{query}' not in database — looking up coordinates online...")
+            lat, lon = get_lat_lon(query)
+            if lat is not None:
+                save_geocoded_to_csv(query, lat, lon)
+                nearest, ndist = find_nearest_in_df(lat, lon, filtered_data[filtered_data['type'] == 'place'])
+                if nearest is None:
+                    nearest, ndist = find_nearest_in_df(lat, lon, filtered_data)
+                if nearest is not None and ndist is not None and ndist <= 300:
+                    ranked = score_and_rank(preprocess(nearest['location']), filtered_data, vectorizer, tfidf_matrix)
+                    best = ranked.iloc[0]
+                elif nearest is not None:
+                    print(f"\n  '{query}' was geocoded but no destinations in our database are nearby.")
+                    print(f"  Nearest available: {nearest['location']} (~{ndist:.0f} km away).")
+                    print(f"  '{query}' has been saved — restart the app to use it directly.")
+                    return None
+            if best["final_score"] < 36:
+                print(f"\n  '{query}' was not found. Try a city or place name.")
+                return None
 
         if best["final_score"] < 40:
             print(f"\n  Low confidence match for '{query}' — showing results for '{best['location']}'.")

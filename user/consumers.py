@@ -32,12 +32,6 @@ class ChatConsumer(WebsocketConsumer):
 
         message = data.get("message")
 
-        # update chat title from first message
-        chat = Chat_Title.objects.get(chat_id=chat_id)
-        if chat.chat_title in ("New Chat", "first chat"):
-            chat.chat_title = remove_stopwords(message)
-            chat.save()
-
         print("MESSAGE:", message)
         print("CHAT ID:", chat_id)
 
@@ -46,6 +40,11 @@ class ChatConsumer(WebsocketConsumer):
         try:
 
             chat = Chat_Title.objects.get(chat_id=chat_id)
+
+            # update chat title from first message
+            if chat.chat_title in ("New Chat", "first chat"):
+                chat.chat_title = remove_stopwords(message)
+                chat.save()
 
             Conversation.objects.create(
                 chat_id=chat,
