@@ -15,4 +15,5 @@ urlpatterns = [
     path("chat_title/",views.chat_title_checker,name="chat"),
     path('delete-session/<str:session_id>/',views.delete_session,name='delete_session'),
     path("delete_all_session/",views.delete_all,name="delete_all"),
+    # path("summary/<str:session_id>/",views.summary_function,name="summary"),
 ]

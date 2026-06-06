@@ -3,7 +3,8 @@ from .models import Conversation, Chat_Title
 import json
 from .nlp_bridge import get_response, _new_session
 from .views import chat_title_maker
-from .helper_functions import remove_stopwords
+from .helper_functions import remove_stopwords,summary_function
+
 
 
 class ChatConsumer(WebsocketConsumer):
@@ -33,6 +34,14 @@ class ChatConsumer(WebsocketConsumer):
         message = data.get("message")
 
         print("MESSAGE:", message)
+        print(type(message))
+        if "summary" in message or "last" in message:
+            self.send(text_data=json.dumps({
+                "status": "success",
+                "bot_response": summary_function(chat_id)#how???????????
+            }))
+            
+
         print("CHAT ID:", chat_id)
 
         bot_response = get_response(message, self.bot_session)

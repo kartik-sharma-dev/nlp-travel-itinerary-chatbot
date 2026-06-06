@@ -2,6 +2,8 @@ import re
 import random
 import spacy
 from .models import *
+from transformers import pipeline
+
 def check_strong_password(password):
     if len(password) < 8:
         return "Password must be at least 8 characters long."
@@ -60,3 +62,32 @@ def chat_title_edit(request,old_title,new_title):
 
     Chat_Title.objects.filter(user=request.user,title=old_title).update(chat_title=new_title)
 
+
+def delete_session(session_id):
+    Chat_Title.objects.filter(chat_id=session_id).delete()    
+
+
+
+
+
+def summary_function(session_id):
+    obj=Chat_Title.objects.get(chat_id=session_id)
+    chat=Conversation.objects.filter(chat_id=obj)
+    
+    list_text="".join(str(chat))
+    summarizer = pipeline("summarization", model="facebook/bart-large-cnn")
+    # text = " ".join(f"User: {msg.user_message} Bot: {msg.bot_message}"for msg in chat)
+    text="".join(msg.user_message for msg in chat)
+    # text = "Long WhatsApp conversation..."
+    summary=None
+    summary = summarizer(text, max_length=50, min_length=5)
+    print(summary[0]["summary_text"])
+    print("-"*100)
+    # for c in chat:
+        # print(type(str(c)))---->string 
+    print("-"*100)
+    
+    
+
+    return summary  
+    

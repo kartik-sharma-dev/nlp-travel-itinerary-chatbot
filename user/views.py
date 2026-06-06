@@ -9,6 +9,7 @@ from .helper_functions import *
 from .nlp_bridge import get_response
 from django.contrib import messages
 import random
+from django.http import HttpResponse
 
 
 def index(request):
@@ -200,3 +201,4 @@ def delete_session(request,session_id):
 def delete_all(request):
     Chat_Title.objects.filter(user=request.user).delete()
     return redirect("chatbot")
+
