@@ -3,7 +3,7 @@ import pickle
 import hashlib
 import pandas as pd
 from sklearn.feature_extraction.text import TfidfVectorizer
-from preprocess import preprocess
+from preprocess import preprocess_batch
 
 BASE       = os.path.dirname(os.path.abspath(__file__))
 CSV_PATH   = os.path.join(BASE, "..", "Data", "real_landmark_locations.csv")
@@ -38,10 +38,10 @@ def load_all_data():
         if missing:
             raise ValueError(f"CSV missing columns: {missing}")
 
-        data["proc_location"] = data["location"].apply(preprocess)
-        data["proc_landmark"] = data["landmark"].apply(preprocess)
-        data["proc_state"]    = data["state"].apply(preprocess)
-        data["proc_country"]  = data["country"].apply(preprocess)
+        data["proc_location"] = preprocess_batch(data["location"].tolist())
+        data["proc_landmark"] = preprocess_batch(data["landmark"].tolist())
+        data["proc_state"]    = preprocess_batch(data["state"].tolist())
+        data["proc_country"]  = preprocess_batch(data["country"].tolist())
         data["combined"]      = (data["proc_location"] + " " +
                                  data["proc_landmark"]  + " " +
                                  data["proc_state"]     + " " +

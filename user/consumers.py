@@ -1,14 +1,15 @@
 from channels.generic.websocket import WebsocketConsumer
 from .models import Conversation, Chat_Title
 import json
-from .nlp_bridge import get_response
+from .nlp_bridge import get_response, _new_session
 from .views import chat_title_maker
-from .helper_functions import remove_stopwords
+from .helper_functions import remove_stopwords,summary_function
+
 
 
 class ChatConsumer(WebsocketConsumer):
     def connect(self):
-        # self.count=0
+        self.bot_session = _new_session()
         print("connected")
         self.accept()
 
@@ -16,6 +17,8 @@ class ChatConsumer(WebsocketConsumer):
         pass
 
     def receive(self, text_data=None, bytes_data=None):
+        if not text_data:
+            return
 
         print("Received:", text_data)
 
@@ -32,20 +35,41 @@ class ChatConsumer(WebsocketConsumer):
 
         message = data.get("message")
 
-        # update chat title from first message
-        chat = Chat_Title.objects.get(chat_id=chat_id)
-        if chat.chat_title in ("New Chat", "first chat"):
-            chat.chat_title = remove_stopwords(message)
-            chat.save()
-
         print("MESSAGE:", message)
-        print("CHAT ID:", chat_id)
+        print(type(message))
+        
+            
 
-        bot_response = get_response(message)
+        print("CHAT ID:", chat_id)
+        s = ["summary", "last", "recap", "overview", "what happened", "what did we discuss", "remind me", "what was the conversation about", "what's the summary", "what's the recap", "what's the overview"]
+
+
+
+
+        if  message.lower() in s:
+            try:
+                self.send(text_data=json.dumps({
+                    "status": "success",
+                    "bot_response": summary_function(chat_id)
+                }))
+            except Exception as e:
+                print("SUMMARY ERROR:", e)
+                self.send(text_data=json.dumps({
+                    "status": "error",
+                    "message": str(e)
+                }))
+            return
+
+        bot_response = get_response(message, self.bot_session)
 
         try:
 
             chat = Chat_Title.objects.get(chat_id=chat_id)
+
+            # update chat title from first message
+            if chat.chat_title in ("New Chat", "first chat"):
+                chat.chat_title = remove_stopwords(message)
+                chat.save()
 
             Conversation.objects.create(
                 chat_id=chat,
