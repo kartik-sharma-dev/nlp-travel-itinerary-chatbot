@@ -70,24 +70,27 @@ def delete_session(session_id):
 
 
 
-def summary_function(session_id):
-    obj=Chat_Title.objects.get(chat_id=session_id)
-    chat=Conversation.objects.filter(chat_id=obj)
-    
-    list_text="".join(str(chat))
-    summarizer = pipeline("summarization", model="facebook/bart-large-cnn")
-    # text = " ".join(f"User: {msg.user_message} Bot: {msg.bot_message}"for msg in chat)
-    text="".join(msg.user_message for msg in chat)
-    # text = "Long WhatsApp conversation..."
-    summary=None
-    summary = summarizer(text, max_length=50, min_length=5)
-    print(summary[0]["summary_text"])
-    print("-"*100)
-    # for c in chat:
-        # print(type(str(c)))---->string 
-    print("-"*100)
-    
-    
+def _clean_for_summary(text):
+    import unicodedata
+    text = unicodedata.normalize("NFKC", text)
+    text = text.encode("ascii", "ignore").decode("ascii")
+    text = re.sub(r"[=*|\\-]{2,}", " ", text)
+    text = re.sub(r"\s+", " ", text).strip()
+    return text
 
-    return summary  
+def summary_function(session_id):
+    obj = Chat_Title.objects.get(chat_id=session_id)
+    chat = Conversation.objects.filter(chat_id=obj)
+
+    text = _clean_for_summary(" ".join(
+        f"User asked: {msg.user_message}. Bot replied: {msg.bot_message}"
+        for msg in chat
+    ))
+
+    if len(text.split()) < 10:
+        return "Not enough conversation history to summarize."
+
+    summarizer = pipeline("summarization", model="sshleifer/distilbart-cnn-12-6")
+    summary = summarizer(text, max_length=100, min_length=10, do_sample=False)
+    return summary[0]["summary_text"]
     

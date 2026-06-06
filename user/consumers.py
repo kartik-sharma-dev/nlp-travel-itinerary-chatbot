@@ -17,6 +17,8 @@ class ChatConsumer(WebsocketConsumer):
         pass
 
     def receive(self, text_data=None, bytes_data=None):
+        if not text_data:
+            return
 
         print("Received:", text_data)
 
@@ -35,14 +37,28 @@ class ChatConsumer(WebsocketConsumer):
 
         print("MESSAGE:", message)
         print(type(message))
-        if "summary" in message or "last" in message:
-            self.send(text_data=json.dumps({
-                "status": "success",
-                "bot_response": summary_function(chat_id)#how???????????
-            }))
+        
             
 
         print("CHAT ID:", chat_id)
+        s = ["summary", "last", "recap", "overview", "what happened", "what did we discuss", "remind me", "what was the conversation about", "what's the summary", "what's the recap", "what's the overview"]
+
+
+
+
+        if  message.lower() in s:
+            try:
+                self.send(text_data=json.dumps({
+                    "status": "success",
+                    "bot_response": summary_function(chat_id)
+                }))
+            except Exception as e:
+                print("SUMMARY ERROR:", e)
+                self.send(text_data=json.dumps({
+                    "status": "error",
+                    "message": str(e)
+                }))
+            return
 
         bot_response = get_response(message, self.bot_session)
 

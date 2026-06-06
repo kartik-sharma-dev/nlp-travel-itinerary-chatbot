@@ -16,12 +16,21 @@ venv/
 env/
 .env/
 
-# Data files (large CSVs — keep location.csv tracked unless it's huge)
+# Data files
 *.csv.bak
+place_distances_edge_list.csv
+
+# Pickle / cache
+*.pkl
+*.pickle
 
 # Jupyter
 .ipynb_checkpoints/
 *.ipynb
+
+# Local config
+settings.local.json
+pyrightconfig.json
 
 # IDE
 .vscode/

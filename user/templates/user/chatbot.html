@@ -296,6 +296,8 @@ body {
     background: var(--bot-msg);
     color: var(--text-dark);
     border-bottom-left-radius: 4px;
+    white-space: pre-wrap;
+    word-break: break-word;
 }
 
 .chat-footer {
@@ -724,7 +726,7 @@ socket.onmessage = function(event){
     removeTypingIndicator();
     const data = JSON.parse(event.data);
     if(data.status === "success"){
-        addBotMessage(data.bot_response);
+        addBotMessage(String(data.bot_response ?? ""));
     } else if(data.status === "error"){
         addBotMessage("Error: " + data.message);
     }
