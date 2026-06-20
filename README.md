@@ -19,11 +19,12 @@ A full-stack Django web application with a real-time WebSocket chatbot that help
 
 **Itinerary Builder** — generates a day-by-day travel plan with sightseeing stops, hotels, and restaurants:
 
-![Itinerary Builder](screenshots/itinerary_builder.png)
+<img width="1337" height="921" alt="image" src="https://github.com/user-attachments/assets/928eea92-6299-440f-97ff-2b90b1b89ec7" />
+
 
 **Distance Calculator** — shows straight-line distance and estimated travel times by car, train, and flight:
 
-![Distance Calculator](screenshots/distance_calculator.png)
+<img width="1063" height="763" alt="image" src="https://github.com/user-attachments/assets/20a32e76-5c43-46ed-8c67-2d79e801045b" />
 
 ---
 
