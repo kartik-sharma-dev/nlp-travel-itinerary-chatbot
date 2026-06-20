@@ -5,9 +5,9 @@ import numpy as np
 import pandas as pd
 import requests
 from sklearn.metrics.pairwise import cosine_similarity
-from preprocess import preprocess
-from query_utils import extract_location, extract_entities_bio, extract_days, extract_budget, extract_itinerary_location
-from scoring import score_and_rank, build_chain, haversine, LABELS, calculate_similarity
+from .preprocess import preprocess
+from .query_utils import extract_location, extract_entities_bio, extract_days, extract_budget, extract_itinerary_location
+from .scoring import score_and_rank, build_chain, haversine, LABELS, calculate_similarity
 import random
 import re
 import string
@@ -35,21 +35,17 @@ _NOISE_WORDS = {
 
 _CSV_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "Data", "real_landmark_locations.csv")
 
-# ============================================================================
-# UTILITY FUNCTIONS FOR FORMATTING
-# ============================================================================
 
 def save_geocoded_to_csv(name, lat, lon):
-    """Append a geocoded place to the CSV so the next session indexes it directly."""
     try:
         with open(_CSV_PATH, mode='a', newline='', encoding='utf-8') as f:
             csv.writer(f).writerow([name.title(), name.title(), "NA", "NA", lon, lat, "place", "NA", "NA"])
-    except Exception as e:
-        pass  # Silently fail
+    except Exception:
+        pass
 
 
 def get_lat_lon(location):
-    """Fetch lat/lon from Nominatim for any place name not in the dataset."""
+    """Fetch lat/lon from Nominatim for any place not already in the dataset."""
     url = "https://nominatim.openstreetmap.org/search"
     params = {"q": location, "format": "json", "limit": 1}
     headers = {"User-Agent": "BestLocationFinder/1.0"}
@@ -65,7 +61,7 @@ def get_lat_lon(location):
 
 
 def _make_geocoded_row(name, lat, lon):
-    """Build a minimal Series row from geocoded coords for distance calculations."""
+    """Builds a minimal DataFrame row from geocoded coords for distance calculations."""
     return pd.Series({
         "location": name.title(),
         "landmark": name.title(),
@@ -80,7 +76,6 @@ def _make_geocoded_row(name, lat, lon):
 
 
 def fmt_rating(rating):
-    """Format rating safely without coordinates."""
     try:
         if rating is None or rating == "" or rating == "NA":
             return "Not Rated"
@@ -93,7 +88,6 @@ def fmt_rating(rating):
 
 
 def fmt_reviews(reviews):
-    """Format review count safely."""
     try:
         if reviews is None or reviews == "" or reviews == "NA":
             return "No reviews"
@@ -104,14 +98,12 @@ def fmt_reviews(reviews):
 
 
 def fmt_state_country(state, country):
-    """Format location nicely."""
     if pd.isna(state) or state == "Unknown":
         return f"{country}" if pd.notna(country) else "Location Unknown"
     return f"{state}, {country}"
 
 
 def fmt_distance(km):
-    """Format distance in readable way."""
     if km is None or km == float("inf"):
         return ""
     if km < 1:
@@ -120,7 +112,6 @@ def fmt_distance(km):
 
 
 def fmt_time(hrs):
-    """Format travel time."""
     h, m = int(hrs), int((hrs % 1) * 60)
     return f"{h}h {m}m" if h else f"{m}m"
 
@@ -138,10 +129,6 @@ def clean_entity(text):
     except Exception as e:
         return text
 
-
-# ============================================================================
-# GREETING & LOCATION RESOLUTION
-# ============================================================================
 
 def resolve_location(query, session):
     try:
@@ -185,10 +172,6 @@ def handle_greeting(query, session):
         return "Hello! How can I help you today?"
 
 
-# ============================================================================
-# HOTEL QUERY HANDLER
-# ============================================================================
-
 def handle_hotel_query(query, hotel_df, vectorizer, tfidf_matrix, session):
     try:
         location_query = resolve_location(query, session)
@@ -230,7 +213,6 @@ def handle_hotel_query(query, hotel_df, vectorizer, tfidf_matrix, session):
         if candidates.empty:
             return f"No hotels found near '{location_query}'. Try a different location."
 
-        # Re-rank by geographic distance
         ref     = candidates.iloc[0]
         ref_lat = ref.get("lat_location")
         ref_lon = ref.get("lon_location")
@@ -261,7 +243,6 @@ def handle_hotel_query(query, hotel_df, vectorizer, tfidf_matrix, session):
             output += f"   📍 Near {row['landmark']}\n"
             output += f"   📌 {fmt_state_country(row['state'], row['country'])}\n"
             output += f"   {fmt_rating(row['ratings'])} • {fmt_reviews(row['total_reviews'])}\n"
-            
             if "dist_km" in row and row["dist_km"] not in (0, float("inf")):
                 output += f"   📏 {fmt_distance(row['dist_km'])} away\n"
             output += "\n"
@@ -269,17 +250,12 @@ def handle_hotel_query(query, hotel_df, vectorizer, tfidf_matrix, session):
         if len(candidates) > 5:
             output += f"Showing {len(results)} of {len(candidates)} results. Ask to 'show more hotels'.\n"
 
-        print(output)
         session["last_results"] = results
         return output
 
     except Exception as e:
         return "Error finding hotels. Please try again."
 
-
-# ============================================================================
-# RESTAURANT QUERY HANDLER
-# ============================================================================
 
 def handle_restaurant_query(query, restaurant_df, vectorizer, tfidf_matrix, session):
     try:
@@ -355,7 +331,6 @@ def handle_restaurant_query(query, restaurant_df, vectorizer, tfidf_matrix, sess
             output += f"   📍 Near {row['landmark']}\n"
             output += f"   📌 {fmt_state_country(row['state'], row['country'])}\n"
             output += f"   {fmt_rating(row['ratings'])} • {fmt_reviews(row['total_reviews'])}\n"
-            
             if "dist_km" in row and row["dist_km"] not in (0, float("inf")):
                 output += f"   📏 {fmt_distance(row['dist_km'])} away\n"
             output += "\n"
@@ -363,17 +338,12 @@ def handle_restaurant_query(query, restaurant_df, vectorizer, tfidf_matrix, sess
         if len(candidates) > 5:
             output += f"Showing {len(results)} of {len(candidates)} results. Ask to 'show more restaurants'.\n"
 
-        print(output)
         session["last_results"] = results
         return output
 
     except Exception as e:
         return "Error finding restaurants. Please try again."
 
-
-# ============================================================================
-# DISTANCE QUERY HANDLER
-# ============================================================================
 
 def handle_distance_query(query, data, vectorizer, tfidf_matrix, session):
     try:
@@ -383,11 +353,11 @@ def handle_distance_query(query, data, vectorizer, tfidf_matrix, session):
             q_lower = query.lower()
             for sep in (' and ', ' from ', ' to '):
                 if sep in q_lower:
-                    idx = q_lower.index(sep)
+                    idx    = q_lower.index(sep)
                     part_a = q_lower[:idx].strip()
                     part_b = q_lower[idx + len(sep):].strip()
-                    loc_a = extract_location(part_a)
-                    loc_b = extract_location(part_b)
+                    loc_a  = extract_location(part_a)
+                    loc_b  = extract_location(part_b)
                     if loc_a and loc_b and loc_a != loc_b:
                         entities = [loc_a, loc_b]
                         break
@@ -455,25 +425,20 @@ def handle_distance_query(query, data, vectorizer, tfidf_matrix, session):
         output += f"  🚗 By Car:    {fmt_time(dist / 60)} (avg 60 km/h)\n"
         output += f"  🚂 By Train:  {fmt_time(dist / 100)} (avg 100 km/h)\n"
         output += f"  ✈️  By Flight: {fmt_time(dist / 800)} (avg 800 km/h)\n"
-        
+
         if mid_row is not None:
             output += f"\n💡 Midpoint Stop: {mid_row['location'].title()}, {mid_row['state']}\n"
 
-        print(output)
         result = {"place_a": place_a, "place_b": place_b, "distance_km": dist}
         session["last_place_a"] = place_a
         session["last_place_b"] = place_b
         session["last_results"] = result
         session["last_intent"]  = "distance_query"
-        return result
+        return output
 
     except Exception as e:
         return "Error calculating distance. Please try again."
 
-
-# ============================================================================
-# NEAREST LOCATION FINDER
-# ============================================================================
 
 def find_nearest_in_df(lat, lon, df, max_km=None, n=1, exclude=None):
     try:
@@ -489,7 +454,6 @@ def find_nearest_in_df(lat, lon, df, max_km=None, n=1, exclude=None):
         if valid.empty:
             return (None, None) if n == 1 else []
 
-        # Vectorized haversine
         lat1  = math.radians(lat)
         lon1  = math.radians(lon)
         lats2 = np.radians(valid['lat_location'].values)
@@ -508,7 +472,7 @@ def find_nearest_in_df(lat, lon, df, max_km=None, n=1, exclude=None):
         if valid.empty:
             return (None, None) if n == 1 else []
 
-        valid = valid.nsmallest(n, '_dist')
+        valid  = valid.nsmallest(n, '_dist')
         result = valid.drop(columns=['_dist'])
 
         if n == 1:
@@ -518,10 +482,6 @@ def find_nearest_in_df(lat, lon, df, max_km=None, n=1, exclude=None):
     except Exception as e:
         return (None, None) if n == 1 else []
 
-
-# ============================================================================
-# ITINERARY QUERY HANDLER
-# ============================================================================
 
 def handle_itinerary_query(query, data, hotel_df, restaurant_df, vectorizer, tfidf_matrix, session):
     try:
@@ -582,7 +542,7 @@ def handle_itinerary_query(query, data, hotel_df, restaurant_df, vectorizer, tfi
         output = f"\n🗺️  {days}-Day Itinerary for {location_query.title()}\n"
         output += "=" * 50 + "\n"
         output += f"📌 State: {best_place['state']}, {best_place['country']}\n"
-        
+
         if isinstance(budget, (int, float)):
             daily = budget / days
             output += f"💰 Budget: ₹{budget:,.0f} (~₹{daily:,.0f}/day)\n"
@@ -592,7 +552,7 @@ def handle_itinerary_query(query, data, hotel_df, restaurant_df, vectorizer, tfi
 
         visited_hotels = set(session.get("rejected_hotels", set()))
         visited_rests  = set(session.get("rejected_rests",  set()))
-        MAX_STAY_KM = 30
+        MAX_STAY_KM    = 30
         session["generated_plan"] = {}
 
         for day_num, stops in enumerate(day_groups, 1):
@@ -608,7 +568,6 @@ def handle_itinerary_query(query, data, hotel_df, restaurant_df, vectorizer, tfi
                 output += f"\n✨ Stop {idx}: {stop['landmark'].title()}\n"
                 output += f"   📍 {fmt_state_country(stop['state'], stop['country'])}\n"
 
-            # Find centroid
             valid_stops = [s for s in stops if pd.notna(s['lat_location']) and pd.notna(s['lon_location'])]
             if valid_stops:
                 ref_lat = sum(s['lat_location'] for s in valid_stops) / len(valid_stops)
@@ -619,7 +578,6 @@ def handle_itinerary_query(query, data, hotel_df, restaurant_df, vectorizer, tfi
             stop_location = stops[0]['location']
             stop_state    = stops[0]['state']
 
-            # Hotel
             hotel_row, h_dist = find_nearest_in_df(
                 ref_lat, ref_lon,
                 hotel_df[hotel_df['landmark'] == stop_location],
@@ -638,7 +596,6 @@ def handle_itinerary_query(query, data, hotel_df, restaurant_df, vectorizer, tfi
                 output += f"\n🏨 Hotel: {hotel_row['location'].title()}\n"
                 output += f"   {fmt_rating(hotel_row['ratings'])} • {fmt_reviews(hotel_row['total_reviews'])}\n"
 
-            # Restaurant
             rest_row, r_dist = find_nearest_in_df(
                 ref_lat, ref_lon,
                 restaurant_df[restaurant_df['landmark'] == stop_location],
@@ -660,17 +617,12 @@ def handle_itinerary_query(query, data, hotel_df, restaurant_df, vectorizer, tfi
             session["generated_plan"][day_num] = day_memory
 
         output += "\n" + "=" * 50 + "\n"
-        print(output)
         session["last_results"] = chain
-        return chain
+        return output
 
     except Exception as e:
         return "Error creating itinerary. Please try again."
 
-
-# ============================================================================
-# LOCATION QUERY HANDLER
-# ============================================================================
 
 def handle_location_query(query, data, vectorizer, tfidf_matrix, session):
     try:
@@ -700,28 +652,27 @@ def handle_location_query(query, data, vectorizer, tfidf_matrix, session):
             if best["final_score"] < 36:
                 return f"'{query}' not found. Try a city or place name."
 
-        if best["final_score"] < 40:
-            print(f"(Showing results for '{best['location']}' — closest match)")
-
         session["last_location"] = best["location"]
         session["last_intent"]   = "location"
 
         chain = build_chain(best, filtered_data, place_only=True)
-        total_dist  = 0.0
+        total_dist       = 0.0
         chain_with_dists = []
 
         output = f"\n📍 Nearby Places in {best['location'].title()}\n"
+        if best["final_score"] < 40:
+            output += f"(Showing results for '{best['location']}' — closest match)\n"
         output += "=" * 50 + "\n\n"
 
         for i, row in enumerate(chain):
-            label = LABELS[i] if i < len(LABELS) else str(i + 1)
+            label    = LABELS[i] if i < len(LABELS) else str(i + 1)
             seg_dist = None
-            
+
             output += f"{label}. {row['location'].title()}\n"
             output += f"   📌 {fmt_state_country(row['state'], row['country'])}\n"
-            
+
             if i > 0:
-                prev = chain[i - 1]
+                prev     = chain[i - 1]
                 prev_lbl = LABELS[i - 1] if i - 1 < len(LABELS) else str(i)
                 if pd.notna(prev["lat_location"]) and pd.notna(row["lat_location"]):
                     seg_dist    = haversine(
@@ -737,10 +688,9 @@ def handle_location_query(query, data, vectorizer, tfidf_matrix, session):
             output += f"Total Route: {len(chain)} stops | {total_dist:.1f} km end-to-end\n"
         output += "=" * 50 + "\n"
 
-        print(output)
         session["last_results"]       = chain_with_dists
         session["last_chain_dist_km"] = total_dist
-        return chain
+        return output
 
     except Exception as e:
         return "Error fetching locations. Please try again."

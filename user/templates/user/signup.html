@@ -3,118 +3,197 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Sign Up</title>
+<title>Sign Up - Travel AI</title>
 
 <style>
-*{
-    margin:0;
-    padding:0;
-    box-sizing:border-box;
-    font-family:Arial,sans-serif;
+:root {
+    --bg-main: #f8fafc;
+    --card-bg: #ffffff;
+    --text-dark: #0f172a;
+    --text-muted: #64748b;
+    --border-color: #e2e8f0;
+    
+    /* Brand Colors */
+    --brand-primary: #0ea5e9;
+    --brand-hover: #0284c7;
+    --brand-light: #e0f2fe;
+    
+    /* Validation Colors */
+    --success-text: #16a34a;
+    --error-text: #dc2626;
+    
+    --radius-lg: 16px;
+    --radius-md: 8px;
 }
 
-body{
-    min-height:100vh;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    background:linear-gradient(135deg,#667eea,#764ba2);
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
 
-.container{
-    width:400px;
-    background:white;
-    padding:30px;
-    border-radius:15px;
-    box-shadow:0 5px 20px rgba(0,0,0,0.2);
+body {
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: var(--bg-main);
+    color: var(--text-dark);
+    -webkit-font-smoothing: antialiased;
+    padding: 20px 0;
 }
 
-h2{
-    text-align:center;
-    margin-bottom:20px;
-    color:#333;
+.container {
+    width: 100%;
+    max-width: 440px;
+    background: var(--card-bg);
+    padding: 40px;
+    border-radius: var(--radius-lg);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05), 0 4px 6px rgba(0, 0, 0, 0.02);
+    margin: 20px;
 }
 
-.input-group{
-    margin-bottom:15px;
+.brand-icon {
+    width: 48px;
+    height: 48px;
+    background: var(--brand-light);
+    color: var(--brand-primary);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 20px auto;
 }
 
-label{
-    display:block;
-    margin-bottom:5px;
-    font-weight:bold;
+h2 {
+    text-align: center;
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 8px;
 }
 
-input{
-    width:100%;
-    padding:10px;
-    border:1px solid #ccc;
-    border-radius:8px;
-    outline:none;
+.subtitle {
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 0.95rem;
+    margin-bottom: 30px;
 }
 
-input:focus{
-    border-color:#667eea;
+.input-group {
+    margin-bottom: 20px;
 }
 
-.btn{
-    width:100%;
-    padding:12px;
-    border:none;
-    border-radius:8px;
-    background:#667eea;
-    color:white;
-    font-size:16px;
-    cursor:pointer;
+label {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--text-dark);
 }
 
-.btn:disabled{
-    background:gray;
-    cursor:not-allowed;
+input {
+    width: 100%;
+    padding: 12px 16px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    font-size: 1rem;
+    color: var(--text-dark);
+    transition: all 0.2s ease;
+    background: #fff;
 }
 
-.message{
-    font-size:13px;
-    margin-top:5px;
+input:focus {
+    outline: none;
+    border-color: var(--brand-primary);
+    box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.15);
 }
 
-.success{
-    color:green;
+/* Date input styling consistency */
+input[type="date"] {
+    color: var(--text-dark);
+    font-family: inherit;
 }
 
-.error{
-    color:red;
+.message {
+    font-size: 0.85rem;
+    margin-top: 8px;
+    font-weight: 500;
+    min-height: 18px; /* Prevents layout jump when text is added */
 }
 
-.login-link{
-    text-align:center;
-    margin-top:15px;
+.success {
+    color: var(--success-text);
 }
 
-.login-link a{
-    text-decoration:none;
-    color:#667eea;
+.error {
+    color: var(--error-text);
+}
+
+.btn {
+    width: 100%;
+    padding: 12px;
+    border: none;
+    border-radius: var(--radius-md);
+    background: var(--brand-primary);
+    color: white;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin-top: 10px;
+}
+
+.btn:hover:not(:disabled) {
+    background: var(--brand-hover);
+}
+
+.btn:disabled {
+    background: #cbd5e1;
+    cursor: not-allowed;
+    color: #f1f5f9;
+}
+
+.login-link {
+    text-align: center;
+    margin-top: 24px;
+    font-size: 0.95rem;
+    color: var(--text-muted);
+}
+
+.login-link a {
+    text-decoration: none;
+    color: var(--brand-primary);
+    font-weight: 500;
+    transition: color 0.2s;
+}
+
+.login-link a:hover {
+    color: var(--brand-hover);
 }
 </style>
 </head>
 <body>
 
 <div class="container">
+    <div class="brand-icon">
+        <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 8l-8 8m0-8l8 8m-4-10a9 9 0 110 18 9 9 0 010-18z"></path></svg>
+    </div>
 
-    <h2>Create Account</h2>
+    <h2>Start Your Journey</h2>
+    <p class="subtitle">Create a new Travel AI account</p>
 
     <form method="POST">
-
         {% csrf_token %}
 
         <div class="input-group">
-            <label>Name</label>
-            <input type="text" name="name" required>
+            <label>Full Name</label>
+            <input type="text" name="name" required placeholder="John Doe">
         </div>
 
         <div class="input-group">
-            <label>Email</label>
-            <input type="email" id="email" name="email" required>
+            <label>Email Address</label>
+            <input type="email" id="email" name="email" required placeholder="john@example.com">
             <div id="emailMessage" class="message"></div>
         </div>
 
@@ -125,36 +204,35 @@ input:focus{
 
         <div class="input-group">
             <label>Mobile Number</label>
-            <input type="text" name="mobile">
+            <input type="text" name="mobile" placeholder="+1 (555) 000-0000">
         </div>
 
         <div class="input-group">
             <label>Password</label>
-            <input type="password" id="password" name="password" required>
+            <input type="password" id="password" name="password" required placeholder="••••••••">
             <div id="passwordMessage" class="message"></div>
         </div>
 
         <div class="input-group">
             <label>Confirm Password</label>
-            <input type="password" id="confirmPassword" name="confirm_password" required>
+            <input type="password" id="confirmPassword" name="confirm_password" required placeholder="••••••••">
             <div id="confirmMessage" class="message"></div>
         </div>
 
         <button type="submit" id="submitBtn" class="btn" disabled>
-            Sign Up
+            Create Account
         </button>
 
     </form>
 
     <div class="login-link">
         Already have an account?
-        <a href="{% url 'login' %}">Login</a>
+        <a href="{% url 'login' %}">Sign In</a>
     </div>
 
 </div>
 
 <script>
-
 const email = document.getElementById("email");
 const password = document.getElementById("password");
 const confirmPassword = document.getElementById("confirmPassword");
@@ -173,36 +251,28 @@ function validateForm(){
 }
 
 email.addEventListener("input", () => {
-
     if(email.value.includes("@")){
         emailValid = true;
         emailMessage.innerHTML = "✓ Valid Email";
         emailMessage.className = "message success";
-    }
-    else{
+    } else {
         emailValid = false;
         emailMessage.innerHTML = "Email must contain @";
         emailMessage.className = "message error";
     }
-
     validateForm();
 });
 
 password.addEventListener("input", () => {
-
-    const regex =
-    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&.#])[A-Za-z\d@$!%*?&.#]{8,}$/;
+    const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&.#])[A-Za-z\d@$!%*?&.#]{8,}$/;
 
     if(regex.test(password.value)){
         passwordValid = true;
-        passwordMessage.innerHTML =
-        "✓ Strong Password";
+        passwordMessage.innerHTML = "✓ Strong Password";
         passwordMessage.className = "message success";
-    }
-    else{
+    } else {
         passwordValid = false;
-        passwordMessage.innerHTML =
-        "Must contain 8+ chars, uppercase, lowercase, number & special character";
+        passwordMessage.innerHTML = "Must contain 8+ chars, uppercase, lowercase, number & special character";
         passwordMessage.className = "message error";
     }
 
@@ -216,23 +286,18 @@ confirmPassword.addEventListener("input", () => {
 });
 
 function validateConfirmPassword(){
-
-    if(password.value === confirmPassword.value &&
-       confirmPassword.value !== ""){
-
+    if(password.value === confirmPassword.value && confirmPassword.value !== ""){
         confirmValid = true;
         confirmMessage.innerHTML = "✓ Passwords Match";
         confirmMessage.className = "message success";
-    }
-    else{
-
+    } else {
         confirmValid = false;
         confirmMessage.innerHTML = "Passwords do not match";
         confirmMessage.className = "message error";
     }
 }
-
 </script>
 
 </body>
-</html> 
+</html>
+
