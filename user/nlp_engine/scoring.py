@@ -17,9 +17,7 @@ def calculate_similarity(query, target):
                 continue
             best_q = max(query_tokens, key=lambda q: fuzz.ratio(t, q))
             raw    = fuzz.ratio(t, best_q)
-            # Penalise length mismatch (squared): prevents "shimla" from falsely
-            # matching "hiroshima" via shared substrings "shim"/"him".
-            # Exact-length pairs (lr=1) are unaffected; 6-vs-9 char pairs lose ~55%.
+            # squared length ratio so short shared substrings don't inflate the score
             max_len = max(len(t), len(best_q))
             min_len = min(len(t), len(best_q))
             lr2 = (min_len / max_len) ** 2 if max_len > 0 else 0
@@ -28,6 +26,7 @@ def calculate_similarity(query, target):
     except Exception as e:
         print(f"Error in calculate_similarity: {e}")
         return 0
+
 
 def haversine(lat1, lon1, lat2, lon2):
     try:
@@ -40,6 +39,7 @@ def haversine(lat1, lon1, lat2, lon2):
     except Exception as e:
         print(f"Error in haversine: {e}")
         return 0
+
 
 def next_closest(lat, lon, nearby, visited_coords, min_distance=0):
     try:
@@ -63,6 +63,7 @@ def next_closest(lat, lon, nearby, visited_coords, min_distance=0):
         print(f"Error in next_closest: {e}")
         return None, None
 
+
 def score_and_rank(processed, data, vectorizer, tfidf_matrix):
     try:
         def fuzzyscore(row):
@@ -70,7 +71,7 @@ def score_and_rank(processed, data, vectorizer, tfidf_matrix):
             state   = calculate_similarity(processed, row['proc_state'])    * 0.20
             country = calculate_similarity(processed, row['proc_country'])  * 0.10
             return place + state + country
-        
+
         scored                = data.copy()
         scored['fuzz_score']  = scored.apply(fuzzyscore, axis=1)
         query_vec             = vectorizer.transform([processed])
@@ -82,35 +83,33 @@ def score_and_rank(processed, data, vectorizer, tfidf_matrix):
         print(f"Error in score_and_rank: {e}")
         return data
 
+
 def build_chain(best_row, data, max_stops=None, min_distance=0, place_only=False, blacklist=None):
     try:
         if max_stops is None:
             max_stops = len(LABELS)
-            
-        # Ensure we have a valid set for the blacklist
         if blacklist is None:
             blacklist = set()
-            
+
         state_name = best_row['state']
         nearby     = data[
             (data['state'] == state_name) &
             data['lat_location'].notna() &
             data['lon_location'].notna()
         ].copy()
-        
+
         if place_only:
             nearby = nearby[nearby['type'] == 'place']
-            
+
         chain          = [best_row]
         visited_coords = {(best_row['lat_location'], best_row['lon_location'])}
-        
-        # Seed the visited_names with our blacklist so the algorithm skips them immediately!
+        # pre-seed with blacklist so rejected places are skipped from the start
         visited_names  = {best_row['landmark']}.union(blacklist)
-        
+
         for _ in range(max_stops - 1):
-            prev        = chain[-1]
-            candidates  = nearby[~nearby['landmark'].isin(visited_names)]
-            row, _      = next_closest(
+            prev       = chain[-1]
+            candidates = nearby[~nearby['landmark'].isin(visited_names)]
+            row, _     = next_closest(
                 prev['lat_location'], prev['lon_location'],
                 candidates, visited_coords, min_distance=min_distance
             )
@@ -119,7 +118,7 @@ def build_chain(best_row, data, max_stops=None, min_distance=0, place_only=False
             chain.append(row)
             visited_coords.add((row['lat_location'], row['lon_location']))
             visited_names.add(row['landmark'])
-            
+
         return chain
     except Exception as e:
         print(f"Error in build_chain: {e}")

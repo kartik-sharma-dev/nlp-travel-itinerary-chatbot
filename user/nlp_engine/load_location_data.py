@@ -1,16 +1,16 @@
 import os
 import pickle
-import hashlib
 import pandas as pd
 from sklearn.feature_extraction.text import TfidfVectorizer
-from preprocess import preprocess_batch
+from .preprocess import preprocess_batch
 
 BASE       = os.path.dirname(os.path.abspath(__file__))
 CSV_PATH   = os.path.join(BASE, "..", "Data", "real_landmark_locations.csv")
 CACHE_PATH = os.path.join(BASE, ".data_cache.pkl")
 
+
 def load_all_data():
-    # load from cache if available
+    # use cached version if the CSV hasn't changed since last run
     try:
         if os.path.exists(CACHE_PATH):
             with open(CACHE_PATH, "rb") as f:
@@ -22,7 +22,6 @@ def load_all_data():
     except Exception as e:
         print(f"Cache load failed, rebuilding from CSV: {e}")
 
-    # cold run — read and preprocess
     try:
         print("Preprocessing data (first run only, spaCy running on full dataset)...")
         data = pd.read_csv(CSV_PATH).fillna("")
@@ -58,7 +57,7 @@ def load_all_data():
     except Exception as e:
         raise RuntimeError(f"Error during preprocessing: {e}")
 
-    # save cache
+    # save so the next startup is instant
     try:
         with open(CACHE_PATH, "wb") as f:
             pickle.dump({

@@ -1,11 +1,10 @@
 import re
-from preprocess import nlp
+from .preprocess import nlp
 
+# maps common city/place names to the landmark name used in the dataset
 INDIA_LOCATIONS = {
-    # Delhi
     'delhi': 'Delhi',
     'new delhi': 'Delhi',
-    # Uttar Pradesh cities → map to actual landmarks/state in dataset
     'agra': 'Taj Mahal',
     'varanasi': 'Kashi Vishwanath Temple',
     'lucknow': 'Bara Imambara',
@@ -13,13 +12,11 @@ INDIA_LOCATIONS = {
     'allahabad': 'Triveni Sangam',
     'prayagraj': 'Triveni Sangam',
     'ayodhya': 'Ram Janmabhoomi',
-    # Maharashtra cities
     'mumbai': 'Maharashtra',
     'bombay': 'Maharashtra',
     'pune': 'Shaniwar Wada',
     'nashik': 'Maharashtra',
     'aurangabad': 'Ajanta Caves',
-    # Rajasthan cities
     'jaipur': 'Rajasthan',
     'jodhpur': 'Mehrangarh Fort',
     'udaipur': 'City Palace Udaipur',
@@ -27,11 +24,9 @@ INDIA_LOCATIONS = {
     'pushkar': 'Pushkar Lake',
     'ajmer': 'Rajasthan',
     'bikaner': 'Rajasthan',
-    # Goa
     'goa': 'Goa',
     'panaji': 'Goa',
     'panjim': 'Goa',
-    # Kerala cities
     'kerala': 'Kerala',
     'munnar': 'Munnar Tea Gardens',
     'alleppey': 'Alleppey Backwaters',
@@ -40,7 +35,6 @@ INDIA_LOCATIONS = {
     'cochin': 'Kochi Chinese Fishing Nets',
     'thiruvananthapuram': 'Padmanabhaswamy Temple',
     'trivandrum': 'Padmanabhaswamy Temple',
-    # Karnataka cities
     'bangalore': 'Karnataka',
     'bengaluru': 'Karnataka',
     'mysore': 'Mysore Palace',
@@ -49,7 +43,6 @@ INDIA_LOCATIONS = {
     'coorg': 'Coorg Coffee Plantations',
     'kodagu': 'Coorg Coffee Plantations',
     'chikmagalur': 'Chikmagalur',
-    # Tamil Nadu cities
     'chennai': 'Tamil Nadu',
     'madras': 'Tamil Nadu',
     'madurai': 'Meenakshi Amman Temple',
@@ -57,29 +50,24 @@ INDIA_LOCATIONS = {
     'kodaikanal': 'Kodaikanal Lake',
     'kanyakumari': 'Kanyakumari Beach',
     'mahabalipuram': 'Mahabalipuram Shore Temple',
-    # Gujarat cities
     'gujarat': 'Gujarat',
     'ahmedabad': 'Sabarmati Ashram',
     'vadodara': 'Laxmi Vilas Palace',
     'baroda': 'Laxmi Vilas Palace',
     'kutch': 'Rann of Kutch',
     'rann of kutch': 'Rann of Kutch',
-    # West Bengal cities
     'kolkata': 'West Bengal',
     'calcutta': 'West Bengal',
     'darjeeling': 'Darjeeling Himalayan Railway',
     'siliguri': 'West Bengal',
-    # Punjab cities
     'amritsar': 'Golden Temple',
     'chandigarh': 'Rock Garden Chandigarh',
     'ludhiana': 'Punjab',
-    # Madhya Pradesh
     'bhopal': 'Upper Lake Bhopal',
     'khajuraho': 'Khajuraho Group of Monuments',
     'ujjain': 'Mahakaleshwar Jyotirlinga',
     'gwalior': 'Gwalior Fort',
     'jabalpur': 'Bhedaghat Marble Rocks',
-    # Himachal Pradesh
     'shimla': 'Shimla',
     'manali': 'Manali',
     'dharamsala': 'Dharamsala',
@@ -87,24 +75,19 @@ INDIA_LOCATIONS = {
     'kasol': 'Kasol',
     'kullu': 'Kullu Valley',
     'spiti': 'Spiti Valley',
-    # Uttarakhand
     'mussoorie': 'Mussoorie',
     'dehradun': 'Dehradun',
     'haridwar': 'Haridwar',
     'rishikesh': 'Rishikesh',
     'nainital': 'Nainital',
-    # Jammu & Kashmir / Ladakh
     'srinagar': 'Dal Lake Srinagar',
     'leh': 'Leh',
     'ladakh': 'Leh',
-    # Northeast India
     'shillong': 'Shillong',
     'gangtok': 'Gangtok',
-    # Andhra Pradesh / Telangana
     'hyderabad': 'Hyderabad',
     'visakhapatnam': 'Visakhapatnam',
     'vizag': 'Visakhapatnam',
-    # Famous landmarks (direct)
     'taj mahal': 'Taj Mahal',
     'taj': 'Taj Mahal',
     'red fort': 'Red Fort',
@@ -119,32 +102,31 @@ INDIA_LOCATIONS = {
     'ellora caves': 'Ellora Caves',
 }
 
+
 def extract_location(query):
-    """Used for standalone queries (e.g., 'hotels near Mumbai')"""
+    """For standalone queries like 'hotels near Mumbai'."""
     try:
         q = query.lower()
 
-        # 1. Quick check against standard cities
-        for loc_key, loc_value in INDIA_LOCATIONS.items():
+        for loc_key in INDIA_LOCATIONS:
             if re.search(rf'\b{re.escape(loc_key)}\b', q):
-                return loc_value
+                return INDIA_LOCATIONS[loc_key]
 
-        # 2. Safely strip leading conversational filler (without destroying real names)
+        # strip conversational filler so the place name is what's left
         fillers = [
-            r'\bi am near\b', r'\bi am at\b', r'\bcan you tell me\b', 
+            r'\bi am near\b', r'\bi am at\b', r'\bcan you tell me\b',
             r'\bsome nearby\b', r'\bwhere i can stay\b', r'\bclose to\b',
             r'\bhotels near\b', r'\bhotel near\b', r'\brestaurants in\b',
             r'\bplaces to visit in\b', r'\bshow me\b', r'\bfind me\b',
             r'\bnearby\b', r'\bnear\b', r'\baround\b'
         ]
-        
         for filler in fillers:
             q = re.sub(filler, ' ', q)
-            
-        # Strip out money and numbers so they aren't treated as places
+
+        # drop currency and numbers
         q = re.sub(r'(?:rs\.?|inr|₹|rupees?)', '', q)
         q = re.sub(r'\b\d+(?:,\d{3})*\b', '', q)
-        
+
         return re.sub(r'\s+', ' ', q).strip()
     except Exception as e:
         print(f"Error in extract_location: {e}")
@@ -152,9 +134,10 @@ def extract_location(query):
 
 
 def extract_entities_bio(query):
-    """Uses spaCy NER to find places."""
+    """Uses spaCy NER to pull place names out of a query."""
     try:
-        if nlp is None: return []
+        if nlp is None:
+            return []
         doc = nlp(query)
         entities = []
         for ent in doc.ents:
@@ -167,31 +150,28 @@ def extract_entities_bio(query):
 
 
 def extract_itinerary_location(query):
-    """The deep extractor for complex trip planning sentences."""
+    """Pulls the destination out of a trip-planning sentence."""
     try:
         q = query.lower()
 
-        # 1. Try NER first — most reliable when spaCy recognises the city
+        # NER is the most reliable when spaCy recognises the city
         doc = nlp(query)
         gpe_ents = [ent.text for ent in doc.ents if ent.label_ in ('GPE', 'LOC', 'FAC')]
         if gpe_ents:
             return gpe_ents[0].lower().strip()
 
-        # 2. Check the manual dictionary fallback
-        for loc_key, loc_value in INDIA_LOCATIONS.items():
+        for loc_key in INDIA_LOCATIONS:
             if re.search(rf'\b{re.escape(loc_key)}\b', q):
-                return loc_value
+                return INDIA_LOCATIONS[loc_key]
 
-        # 3. Strip budget patterns first so numbers don't confuse later steps
+        # strip budget amounts before anything else so numbers don't confuse later steps
         q = re.sub(r'budget\s*(?:of|is|:)?\s*(?:rs\.?|inr|₹|rupees?)?\s*[\d,]+', '', q)
         q = re.sub(r'(?:rs\.?|inr|₹)\s*[\d,]+', '', q)
         q = re.sub(r'\b(?:under|within|less\s+than)\s+(?:rs\.?|inr|₹|rupees?)?\s*[\d,]+', '', q)
 
-        # 4. Strip day/night counts
         word_nums = 'one|two|three|four|five|six|seven|eight|nine|ten'
         q = re.sub(rf'\b(?:{word_nums}|\d+)\s*(?:day|days|night|nights)\b', '', q)
 
-        # 5. Strip trip planning verbs
         trip_phrases = [
             'give me a travel plan for', 'plan a trip to', 'plan my trip to',
             'plan a trip for', 'travel plan for', 'itinerary for',
@@ -204,16 +184,13 @@ def extract_itinerary_location(query):
         for phrase in sorted(trip_phrases, key=len, reverse=True):
             q = re.sub(rf'\b{re.escape(phrase)}\b', ' ', q)
 
-        # Clean up stray artifacts
         q = re.sub(r'\b(?:rs\.?|inr|rupees?)\b', ' ', q)
         q = re.sub(r'\b\d+\b', ' ', q)
 
         result = re.sub(r'\s+', ' ', q).strip()
-
-        # Strip leftover leading prepositions after phrase removal ("for shimla" → "shimla")
         result = re.sub(r'^(?:for|to|in|at|near|around|from|on|about)\s+', '', result).strip()
 
-        # Discard results that are only filler / stop words with no actual place name
+        # if only filler words are left there's no real place name
         _FILLER = {
             'i', 'want', 'to', 'go', 'am', 'the', 'a', 'an', 'at', 'in', 'for',
             'me', 'my', 'trip', 'plan', 'visit', 'need', 'please', 'help',

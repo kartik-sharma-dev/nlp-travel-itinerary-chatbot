@@ -3,11 +3,8 @@ import re
 _kw_cache: dict = {}
 
 def _kw_matches(kw: str, q: str) -> bool:
-    """Word-boundary match for keywords.
-    Short keywords (≤3 chars) use FULL boundaries so 'yo' never matches 'you',
-    'hi' never matches 'him', 'hy' never matches 'hyderabad', 'yes' never matches
-    'yesterday'. Longer keywords keep left-only boundary so 'hotel' still matches
-    'hotels' and 'restaurant' still matches 'restaurants'."""
+    # short keywords need full word boundaries so "hi" doesn't match "him",
+    # longer ones only need a left boundary so "hotel" still matches "hotels"
     if kw not in _kw_cache:
         if len(kw) <= 3:
             _kw_cache[kw] = re.compile(rf'\b{re.escape(kw)}\b', re.IGNORECASE)
@@ -18,7 +15,6 @@ def _kw_matches(kw: str, q: str) -> bool:
 
 def session():
     return {
-        # state machine fields (detect_intent)
         "state":    "greeting",
         "attempts": 0,
         "itinerary": None,
@@ -32,7 +28,6 @@ def session():
             "interests":   None,
             "pace":        None,
         },
-        # handler / nlp_bridge fields
         "last_location":  None,
         "last_intent":    None,
         "last_results":   [],
@@ -48,7 +43,6 @@ def session():
 
 
 def reset_session(session):
-    """Resets the conversation back to square one."""
     try:
         session["state"]    = "greeting"
         session["attempts"] = 0
@@ -82,7 +76,6 @@ INTENTS = {
         "hey there", "hi there", "hello there", "yo yo", "hola", "ello",
         "start", "begin", "reset", "restart", "new chat", "help me"
     ],
-
     "hotel": [
         "hotel", "room", "stay", "accommodation", "lodge", "resort", "book",
         "hostel", "motel", "inn", "airbnb", "guest house", "guesthouse",
@@ -95,7 +88,6 @@ INTENTS = {
         "budget hotel", "luxury hotel", "cheap stay",
         "affordable stay", "rooms available", "vacancy", "suite"
     ],
-
     "location": [
         "nearby", "near", "close to", "around", "around me",
         "in the area", "some nearby",
@@ -111,7 +103,6 @@ INTENTS = {
         "fort", "palace", "garden", "market",
         "beach", "hill", "waterfall", "lake"
     ],
-
     "distance_query": [
         "distance", "how far", "km", "miles", "haversine",
         "how long", "travel time", "drive time",
@@ -123,7 +114,6 @@ INTENTS = {
         "navigate", "way to get", "path to",
         "shortest route", "fastest route"
     ],
-
     "restaurant": [
         "restaurant", "food", "dining", "eatery", "cafe",
         "diner", "bistro", "eat",
@@ -142,7 +132,6 @@ INTENTS = {
         "bar", "pub", "lounge",
         "food court", "food stall"
     ],
-
     "taxicab": [
         "taxi", "cab", "ride", "transport",
         "uber", "lyft", "taxicab", "chauffeur",
@@ -158,64 +147,29 @@ INTENTS = {
         "driver", "vehicle", "conveyance",
         "travel to", "go from", "reach there"
     ],
-
     "build_itinerary": [
-        "plan a trip",
-        "plan my trip",
-        "plan me a trip",
-        "trip to",
-        "i am planning a trip",
-        "i want to plan a trip",
-        "i want to go to",
-        "i want to visit",
-        "i am going to",
-        "make an itinerary for me",
-        "help me plan my holiday",
-        "travel plan",
-        "create a travel plan",
-        "create a trip",
-        "make a trip",
-        "plan a holiday",
-        "plan my holiday",
-        "holiday trip",
-        "holiday plan",
-        "plan a vacation",
-        "plan my vacation",
-        "vacation plan",
-        "i need a travel schedule",
-        "suggest a trip for me",
-        "plan something for this winter",
-        "build me a travel plan",
-        "can you make me an itinerary",
-        "help me figure out my trip",
-        "suggest an itinerary",
-        "plan a 5 day trip for me",
-        "i want a week long holiday",
-        "give me a travel plan",
-        "create a holiday plan for my family",
-        "i need an itinerary for 7 days",
-        "plan a budget trip for me",
-        "help me with my travel plans",
-        "can you organise my trip",
-        "i need a day by day plan",
+        "plan a trip", "plan my trip", "plan me a trip",
+        "trip to", "i am planning a trip",
+        "i want to plan a trip", "i want to go to", "i want to visit",
+        "i am going to", "make an itinerary for me",
+        "help me plan my holiday", "travel plan",
+        "create a travel plan", "create a trip", "make a trip",
+        "plan a holiday", "plan my holiday", "holiday trip", "holiday plan",
+        "plan a vacation", "plan my vacation", "vacation plan",
+        "i need a travel schedule", "suggest a trip for me",
+        "plan something for this winter", "build me a travel plan",
+        "can you make me an itinerary", "help me figure out my trip",
+        "suggest an itinerary", "plan a 5 day trip for me",
+        "i want a week long holiday", "give me a travel plan",
+        "create a holiday plan for my family", "i need an itinerary for 7 days",
+        "plan a budget trip for me", "help me with my travel plans",
+        "can you organise my trip", "i need a day by day plan",
         "put together a trip for me",
-        "weekend trip",
-        "weekend plan",
-        "solo trip",
-        "family trip",
-        "group trip",
-        "honeymoon plan",
-        "budget trip",
-        "backpacking",
-        "travel guide",
-        "tour guide",
-        "tour plan",
-        "complete guide",
-        "travel schedule",
-        "visit plan",
-        "sightseeing plan"
+        "weekend trip", "weekend plan", "solo trip", "family trip",
+        "group trip", "honeymoon plan", "budget trip", "backpacking",
+        "travel guide", "tour guide", "tour plan", "complete guide",
+        "travel schedule", "visit plan", "sightseeing plan"
     ],
-
     "answer": [
         "5 days", "one week", "two weeks",
         "around 10 days", "long weekend",
@@ -228,138 +182,70 @@ INTENTS = {
         "relaxed pace", "packed schedule",
         "i love food and culture"
     ],
-
     "refine_itinerary": [
-        "can you swap day 2",
-        "remove the museum",
-        "change day 3",
-        "i don't want that activity",
-        "replace the restaurant",
-        "make it more relaxed",
-        "add one more day",
-        "we don't like shopping",
-        "add more food activities",
-        "remove the adventure stuff",
-        "make day 1 less packed",
-        "i want more cultural activities",
-        "change the pace",
-        "redo day 2",
-        "replace that attraction",
-        "add more nature activities",
-        "make it more budget friendly",
-        "remove nightlife from the plan",
-        "add a beach day",
-        "swap the lunch restaurant",
-        "adjust the schedule",
-        "fewer activities per day",
-        "remove the temple visit",
-        "swap day 1 and day 2",
-        "make it more romantic",
-        "day 2 is not good",
-        "i don't like this plan",
-        "not happy with the itinerary",
-        "this plan is not good",
-        "day 3 needs changes",
-        "i want to modify day 2"
+        "can you swap day 2", "remove the museum", "change day 3",
+        "i don't want that activity", "replace the restaurant",
+        "make it more relaxed", "add one more day",
+        "we don't like shopping", "add more food activities",
+        "remove the adventure stuff", "make day 1 less packed",
+        "i want more cultural activities", "change the pace",
+        "redo day 2", "replace that attraction",
+        "add more nature activities", "make it more budget friendly",
+        "remove nightlife from the plan", "add a beach day",
+        "swap the lunch restaurant", "adjust the schedule",
+        "fewer activities per day", "remove the temple visit",
+        "swap day 1 and day 2", "make it more romantic",
+        "day 2 is not good", "i don't like this plan",
+        "not happy with the itinerary", "this plan is not good",
+        "day 3 needs changes", "i want to modify day 2"
     ],
-
     "context_switch": [
-        "change destination",
-        "switch destinations",
-        "i changed my mind",
-        "forget the previous plan",
-        "let's go somewhere else",
+        "change destination", "switch destinations", "i changed my mind",
+        "forget the previous plan", "let's go somewhere else",
         "i want to change to a different city",
-        "actually i prefer a hill station",
-        "switch to a beach destination",
-        "somewhere in south india",
-        "somewhere different",
+        "actually i prefer a hill station", "switch to a beach destination",
+        "somewhere in south india", "somewhere different",
         "what about instead",
-        "i am in",
-        "i'm in",
-        "i am at",
-        "i'm at",
-        "currently in",
-        "we are in",
-        "we're in",
-        "planning to visit",
-        "want to explore",
+        "i am in", "i'm in", "i am at", "i'm at",
+        "currently in", "we are in", "we're in",
+        "planning to visit", "want to explore",
     ],
-
     "restart": [
-        "start again",
-        "start over",
-        "start fresh",
-        "reset everything",
-        "forget everything",
-        "redo this",
-        "begin again",
-        "clear everything",
-        "restart the planning",
-        "try again from scratch"
+        "start again", "start over", "start fresh",
+        "reset everything", "forget everything", "redo this",
+        "begin again", "clear everything",
+        "restart the planning", "try again from scratch"
     ],
-
     "confirm": [
-        "yes", "yeah", "yep",
-        "sure", "correct",
-        "that's right",
-        "sounds good",
-        "perfect",
-        "that looks great",
-        "yes please",
-        "absolutely",
-        "definitely",
-        "that's fine",
-        "ok", "okay",
+        "yes", "yeah", "yep", "sure", "correct",
+        "that's right", "sounds good", "perfect",
+        "that looks great", "yes please", "absolutely",
+        "definitely", "that's fine", "ok", "okay",
         "great", "love it"
     ],
-
     "deny": [
-        "no", "nope",
-        "not really",
-        "that's wrong",
-        "that's not right",
-        "i don't want that",
-        "no thank you",
-        "not what i meant",
-        "that's incorrect",
-        "i didn't mean that"
+        "no", "nope", "not really", "that's wrong", "that's not right",
+        "i don't want that", "no thank you", "not what i meant",
+        "that's incorrect", "i didn't mean that"
     ],
-
     "goodbye": [
-        "bye", "goodbye",
-        "see you",
-        "thanks bye",
-        "i'm done",
-        "thank you goodbye",
-        "cheers",
-        "take care",
-        "that will do thanks",
-        "thanks for your help",
+        "bye", "goodbye", "see you", "thanks bye",
+        "i'm done", "thank you goodbye", "cheers", "take care",
+        "that will do thanks", "thanks for your help",
         "i have everything i need"
     ],
-
     "out_of_scope": [
-        "tell me a joke",
-        "what is the weather today",
-        "who won the world cup",
-        "what is the capital of france",
-        "can you write code for me",
-        "what is the meaning of life",
-        "tell me about history",
-        "what is today's date",
-        "recommend a movie",
-        "what is the stock price",
-        "tell me something interesting",
-        "what is machine learning",
-        "help me with math",
-        "who is the prime minister",
-        "what is the best phone to buy",
-        "help me with my homework",
+        "tell me a joke", "what is the weather today",
+        "who won the world cup", "what is the capital of france",
+        "can you write code for me", "what is the meaning of life",
+        "tell me about history", "what is today's date",
+        "recommend a movie", "what is the stock price",
+        "tell me something interesting", "what is machine learning",
+        "help me with math", "who is the prime minister",
+        "what is the best phone to buy", "help me with my homework",
         "what is cricket score"
     ]
 }
-
 
 
 WORD_NUMS = ['one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten']
@@ -374,12 +260,14 @@ DIST_KWS  = [
     'time to reach', 'how to reach', 'how do i reach', 'distance between',
     'route', 'directions', 'navigate',
 ]
+
+# restart must come before greeting so "restart the planning" doesn't match greeting's "restart" keyword
 PRIORITY_ORDER = [
-    "restart",        # before greeting — "restart the planning" must not match greeting's "restart" keyword
-    "goodbye",        # before greeting
+    "restart",
+    "goodbye",
     "greeting",
-    "hotel",          # specific intents before broad "location"
-    "restaurant",     # before "location" — "go to a restaurant" must not match location's "go to"
+    "hotel",
+    "restaurant",       # before "location" — "go to a restaurant" must not match location's "go to"
     "distance_query",
     "taxicab",
     "build_itinerary",
@@ -387,29 +275,28 @@ PRIORITY_ORDER = [
     "context_switch",
     "confirm",
     "deny",
-    "location",       # broad catch-all — must come after all specifics
+    "location",         # broad catch-all, must stay last among the named intents
     "answer",
     "out_of_scope",
 ]
 
-
 _BUILD_ITINERARY_REGEX = [
-    re.compile(r'\bplan\b.{0,30}\btrip\b',     re.IGNORECASE),
-    re.compile(r'\bplan\b.{0,30}\bholiday\b',  re.IGNORECASE),
-    re.compile(r'\bplan\b.{0,30}\bvacation\b', re.IGNORECASE),
+    re.compile(r'\bplan\b.{0,30}\btrip\b',      re.IGNORECASE),
+    re.compile(r'\bplan\b.{0,30}\bholiday\b',   re.IGNORECASE),
+    re.compile(r'\bplan\b.{0,30}\bvacation\b',  re.IGNORECASE),
     re.compile(r'\b\d+\s*day\b.{0,20}\btrip\b', re.IGNORECASE),
-    re.compile(r'\btrip\b.{0,10}\bto\b',        re.IGNORECASE),
+    re.compile(r'\btrip\b.{0,10}\bto\b',         re.IGNORECASE),
 ]
 
+
 def detect_intent(query):
-    """Checks the query against the INTENTS dictionary phrases in priority order."""
     try:
         q = query.lower().strip()
         for intent_name in PRIORITY_ORDER:
             keywords = INTENTS.get(intent_name, [])
             if any(_kw_matches(kw.lower(), q) for kw in keywords):
                 return intent_name
-        # Regex fallback for build_itinerary patterns with words in the middle
+        # regex fallback catches patterns like "plan a relaxing trip" where words are in the middle
         if any(p.search(q) for p in _BUILD_ITINERARY_REGEX):
             return "build_itinerary"
         return "unknown"
@@ -419,12 +306,10 @@ def detect_intent(query):
 
 
 def get_missing_info(session):
-    """Checks the collected dict to see what we need to ask next."""
     try:
         collected = session["collected"]
         if not collected.get("destination"): return "destination"
         if not collected.get("days"):        return "days"
-        # Budget is optional — skip asking if user gave a one-shot query
         return None
     except Exception as e:
         print(f"Error in get_missing_info: {e}")
@@ -441,44 +326,44 @@ SLOT_KEYWORDS = {
         r"\bmorning[s]?\b", r"\ba\.?m\.?\b", r"\bearly\b", r"\bbreakfast\b",
         r"\bbrunch\b", r"\bfirst (?:place|spot|thing)\b", r"\bsunrise\b",
         r"\bstart of(?: the)? day\b", r"\bdaybreak\b", r"\bwake up\b",
-        r"\bcrack of dawn\b", r"\brise and shine\b", r"\bfirst light\b", 
+        r"\bcrack of dawn\b", r"\brise and shine\b", r"\bfirst light\b",
         r"\bearly hours\b", r"\bcoffee time\b", r"\bmorning time\b"
     ],
     "afternoon": [
         r"\bafternoon[s]?\b", r"\bnoon\b", r"\bmidday\b", r"\bp\.?m\.?\b",
         r"\blunch(?:time)?\b", r"\bsecond (?:place|spot)\b", r"\bmatinee\b",
-        r"\bdaytime\b", r"\bpost[- ]lunch\b",r"\bmid[- ]afternoon\b", r"\blate afternoon\b", r"\btea time\b", 
-        r"\bgolden hour\b", r"\bsiesta\b", r"\bduring the day\b"
+        r"\bdaytime\b", r"\bpost[- ]lunch\b", r"\bmid[- ]afternoon\b",
+        r"\blate afternoon\b", r"\btea time\b", r"\bgolden hour\b",
+        r"\bsiesta\b", r"\bduring the day\b"
     ],
     "dinner": [
         r"\bdinner\b", r"\bsupper\b", r"\b(?:rest|din)a[u]?rant[s]?\b",
         r"\bfood\b", r"\b(?:place|somewhere) to eat\b", r"\bbite(?: to eat)?\b",
         r"\bgrub\b", r"\bdining\b", r"\bmeal\b", r"\bstarving\b", r"\bhungry\b",
-        r"\bcafe\b", r"\bstreet food\b",r"\bevening meal\b", r"\bchow down\b", r"\bgrab dinner\b", 
-        r"\bbook a table\b", r"\breservation[s]?\b", r"\bfeast\b", 
-        r"\bfeed me\b", r"\bdinner time\b", r"\bwhere to eat\b", r"\btakeout\b"
+        r"\bcafe\b", r"\bstreet food\b", r"\bevening meal\b", r"\bchow down\b",
+        r"\bgrab dinner\b", r"\bbook a table\b", r"\breservation[s]?\b",
+        r"\bfeast\b", r"\bfeed me\b", r"\bdinner time\b",
+        r"\bwhere to eat\b", r"\btakeout\b"
     ],
     "hotel": [
         r"\bhotel[s]?\b", r"\bstay(?:ing)?\b", r"\baccommodation[s]?\b",
         r"\blodge(?:s|ing)?\b", r"\bresort[s]?\b", r"\bhostel[s]?\b",
         r"\bairbnb\b", r"\bmotel[s]?\b", r"\binn\b", r"\bbooking[s]?\b",
         r"\breservation[s]?\b", r"\bsleep\b", r"\bguest[- ]house\b", r"\bb&b\b",
-        r"\bplace to crash\b", r"\bcheck[- ]in\b", r"\bwhere we sleep\b", 
-        r"\bsuite[s]?\b", r"\bvilla[s]?\b", r"\bhomestay[s]?\b", r"\bcamping\b", 
-        r"\bglamping\b", r"\btent\b", r"\bbasecamp\b", r"\bwhere to stay\b"
+        r"\bplace to crash\b", r"\bcheck[- ]in\b", r"\bwhere we sleep\b",
+        r"\bsuite[s]?\b", r"\bvilla[s]?\b", r"\bhomestay[s]?\b",
+        r"\bcamping\b", r"\bglamping\b", r"\btent\b",
+        r"\bbasecamp\b", r"\bwhere to stay\b"
     ],
 }
 
 VISITED_KEYWORDS = [
     r"\balready (?:visited|been|seen|went|did|covered|done)\b",
     r"\b(?:i've|i have|we've|we have) (?:been|visited|seen)\b",
-    r"\bbeen there\b",
-    r"\bdone that\b",
-    r"\bchecked (?:it|that) off\b",
-    r"\bfamiliar with\b",
-    r"\bsaw (?:it|that)\b",
-    r"\bwent last time\b", r"\bsaw it already\b", r"\bknocked that out\b", 
-    r"\bnot my first time\b", r"\bpreviously visited\b", r"\bi know it well\b",
+    r"\bbeen there\b", r"\bdone that\b", r"\bchecked (?:it|that) off\b",
+    r"\bfamiliar with\b", r"\bsaw (?:it|that)\b", r"\bwent last time\b",
+    r"\bsaw it already\b", r"\bknocked that out\b", r"\bnot my first time\b",
+    r"\bpreviously visited\b", r"\bi know it well\b",
     r"\bwe went there\b", r"\bcrossed that off\b"
 ]
 
@@ -488,10 +373,9 @@ DISLIKE_KEYWORDS = [
     r"\b(?:boring|bad|terrible|awful|sucks|hate)\b",
     r"\b(?:too )?(?:touristy|crowded|expensive|loud)\b",
     r"\b(?:skip|pass|avoid|rather not)\b",
-    r"\boverrated\b",
-    r"\bhard pass\b",
-    r"\bno thanks\b", r"\bdefinitely not\b", r"\bno way\b", r"\btourist trap\b", 
-    r"\blame\b", r"\bdull\b", r"\bmeh\b", r"\bnah\b", r"\bzero interest\b", 
+    r"\boverrated\b", r"\bhard pass\b", r"\bno thanks\b",
+    r"\bdefinitely not\b", r"\bno way\b", r"\btourist trap\b",
+    r"\blame\b", r"\bdull\b", r"\bmeh\b", r"\bnah\b", r"\bzero interest\b",
     r"\blooks awful\b", r"\bsounds terrible\b", r"\bwaste of time\b"
 ]
 
@@ -501,17 +385,14 @@ CHANGE_SLOT_KEYWORDS = [
     r"\b(?:suggest|give me) another\b",
     r"\binstead(?: of)?\b",
     r"\balternative(?:s| to)?\b",
-    r"\bother than\b",
-    r"\bnot (?:the|this|that)\b",
-    r"\bsomething else\b",
-    r"\bwhat else\b",
+    r"\bother than\b", r"\bnot (?:the|this|that)\b",
+    r"\bsomething else\b", r"\bwhat else\b",
     r"\b(?:prefer|rather) (?:to )?(?:do|go)\b",
-    r"\bscrap (?:that|this)\b",
-    r"\boptions for\b",
-    r"\bpivot\b",
-    r"\bmix it up\b", r"\bshuffle\b", r"\bswitch it up\b", r"\btrade\b", 
-    r"\bsubstitute\b", r"\bfresh idea[s]?\b", r"\banything else\b", 
-    r"\bwhat else you got\b", r"\bgot anything else\b", r"\bredo\b",
+    r"\bscrap (?:that|this)\b", r"\boptions for\b",
+    r"\bpivot\b", r"\bmix it up\b", r"\bshuffle\b", r"\bswitch it up\b",
+    r"\btrade\b", r"\bsubstitute\b", r"\bfresh idea[s]?\b",
+    r"\banything else\b", r"\bwhat else you got\b",
+    r"\bgot anything else\b", r"\bredo\b",
 ]
 
 
@@ -533,7 +414,6 @@ def extract_slot(q):
     try:
         for slot, keywords in SLOT_KEYWORDS.items():
             for kw in keywords:
-                # ADDED s?: Now it matches "restaurant", "restaurants", "restaraunts", etc.
                 if re.search(kw, q):
                     return slot
         return None
@@ -545,22 +425,21 @@ def extract_slot(q):
 def extract_correction_type(q):
     try:
         def has_match(kws):
-            # Added s? here too, just in case!
             return any(re.search(kw, q) for kw in kws)
 
         if has_match(VISITED_KEYWORDS):
             return "visited"
-        
+
         slot = extract_slot(q)
-        
-        # UPGRADED: If they use a word like "switch", we ALWAYS lock it in as a change intent!
-        # If the slot is missing, the state machine will gracefully ask them "Which part?"
+
+        # any change keyword locks us into change_slot; the state machine will
+        # ask which day/slot if those details are missing
         if has_match(CHANGE_SLOT_KEYWORDS):
             return "change_slot"
-            
+
         if has_match(DISLIKE_KEYWORDS):
             return "change_slot" if slot else "dislike_day"
-            
+
         return None
     except Exception as e:
         print(f"Error in extract_correction_type: {e}")
@@ -572,9 +451,6 @@ def is_correction_query(query):
         q = query.lower()
         def has_match(kws):
             return any(re.search(kw, q) for kw in kws)
-        
-        # We removed the 'has_day_ref' requirement. 
-        # If they use a change keyword, we catch it, so we can ask them for the day!
         return (
             has_match(VISITED_KEYWORDS) or
             has_match(DISLIKE_KEYWORDS) or
@@ -598,9 +474,6 @@ def parse_correction(query):
         return {"type": None, "day": None, "slot": None}
 
 
-
-
-
 SLOT_QUESTIONS = {
     "last_location":   "Which city or destination are you planning to visit?",
     "trip_days":       "How many days is your trip?",
@@ -616,21 +489,14 @@ WORD_TO_NUM = {
 }
 
 
-
-
-
 def fill_slot(slot_name, raw_answer, session):
-    """
-    Saves the user's answer into both session["collected"] and the handler fields.
-    Returns True if successfully filled, False otherwise.
-    """
     try:
         answer = raw_answer.strip().lower()
 
         if slot_name == "destination":
             val = raw_answer.strip().title()
             session["collected"]["destination"] = val
-            session["last_location"] = val          # keep handlers in sync
+            session["last_location"] = val
             return True
 
         if slot_name == "days":
@@ -654,7 +520,6 @@ def fill_slot(slot_name, raw_answer, session):
                 session["collected"]["budget"] = amount
                 session["preferences"]["budget"] = amount
                 return True
-
             if any(w in answer for w in ["budget", "cheap", "low", "economic"]):
                 val = "budget"
             elif any(w in answer for w in ["luxury", "high", "premium", "expensive"]):
@@ -670,10 +535,10 @@ def fill_slot(slot_name, raw_answer, session):
         print(f"Error in fill_slot: {e}")
         return False
 
+
 def handle_correction_followup(user_input, session):
     try:
         q = user_input.lower()
-
         correction = session.get("pending_correction") or parse_correction(user_input) or {}
 
         if correction.get("day") is None:

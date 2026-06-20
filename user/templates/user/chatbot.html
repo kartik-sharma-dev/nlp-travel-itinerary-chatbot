@@ -3,25 +3,36 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AI Chatbot</title>
+<title>Travel AI Assistant</title>
 
 <style>
 :root {
-    --bg-main: #f9fafb;
-    --sidebar-bg: #111827;
-    --sidebar-hover: #374151;
-    --sidebar-active: #2563eb;
-    --sidebar-text: #e5e7eb;
+    /* Modern minimalist palette with travel-inspired accents */
+    --sidebar-bg: #0f172a;       /* Deep slate */
+    --sidebar-hover: #1e293b;
+    --sidebar-active: #334155;
+    --sidebar-text: #cbd5e1;
     --chat-bg: #ffffff;
-    --user-msg: #2563eb;
-    --bot-msg: #f3f4f6;
-    --text-dark: #1f2937;
-    --text-muted: #6b7280;
-    --border-color: #e5e7eb;
+    
+    /* Brand / Accent */
+    --brand-primary: #0ea5e9;    /* Sky blue */
+    --brand-hover: #0284c7;
+    
+    /* Message styling */
+    --user-msg-bg: #f1f5f9;
+    --text-dark: #0f172a;
+    --text-muted: #64748b;
+    --border-color: #e2e8f0;
+    
+    /* Modals & actions */
     --danger: #ef4444;
     --danger-hover: #dc2626;
+    --radius-full: 9999px;
     --radius-lg: 16px;
-    --radius-md: 12px;
+    --radius-md: 8px;
+    
+    /* Layout */
+    --chat-max-width: 800px;
 }
 
 * {
@@ -33,9 +44,10 @@
 
 body {
     height: 100vh;
-    background: var(--bg-main);
+    background: var(--chat-bg);
     overflow: hidden;
     color: var(--text-dark);
+    -webkit-font-smoothing: antialiased;
 }
 
 .app-container {
@@ -47,82 +59,61 @@ body {
    SIDEBAR
 =========================== */
 .sidebar {
-    width: 280px;
+    width: 260px;
     background: var(--sidebar-bg);
     color: var(--sidebar-text);
     display: flex;
     flex-direction: column;
     transition: width 0.3s ease;
+    font-size: 0.9rem;
 }
 
 .sidebar-header {
-    padding: 20px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 16px;
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 12px;
 }
 
 .new-chat-btn {
     display: flex;
     align-items: center;
-    justify-content: center;
-    gap: 8px;
+    gap: 12px;
     width: 100%;
-    padding: 12px;
+    padding: 12px 16px;
     text-decoration: none;
-    color: white;
-    background: rgba(255, 255, 255, 0.1);
+    color: #ffffff;
+    background: transparent;
     border: 1px solid rgba(255, 255, 255, 0.2);
     border-radius: var(--radius-md);
     font-weight: 500;
-    transition: all 0.2s ease;
+    transition: background 0.2s ease;
     cursor: pointer;
 }
 
 .new-chat-btn:hover {
-    background: rgba(255, 255, 255, 0.15);
-}
-
-.logout-btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    width: 100%;
-    padding: 10px;
-    text-decoration: none;
-    color: #fca5a5;
-    background: rgba(239, 68, 68, 0.1);
-    border: 1px solid rgba(239, 68, 68, 0.25);
-    border-radius: var(--radius-md);
-    font-weight: 500;
-    font-size: 0.9rem;
-    transition: all 0.2s ease;
-    cursor: pointer;
-}
-
-.logout-btn:hover {
-    background: rgba(239, 68, 68, 0.2);
-    color: #fecaca;
+    background: rgba(255, 255, 255, 0.05);
 }
 
 .chat-history {
     flex: 1;
     overflow-y: auto;
-    padding: 15px;
+    padding: 8px 12px;
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 4px;
 }
 
-/* Each history row = link + delete button side by side */
+/* Scrollbar for sidebar */
+.chat-history::-webkit-scrollbar { width: 4px; }
+.chat-history::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
+
 .history-row {
     display: flex;
     align-items: center;
-    gap: 4px;
     border-radius: var(--radius-md);
     transition: background 0.2s;
+    padding: 2px;
 }
 
 .history-row:hover {
@@ -131,56 +122,76 @@ body {
 
 .history-row:hover .delete-session-btn {
     opacity: 1;
-    pointer-events: auto;
 }
 
 .history-item {
     flex: 1;
-    padding: 11px 12px;
+    padding: 10px 12px;
     text-decoration: none;
     color: var(--sidebar-text);
-    border-radius: var(--radius-md);
-    font-size: 0.92rem;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    transition: color 0.2s;
-}
-
-.history-row.active .history-item {
-    color: white;
-    font-weight: 500;
 }
 
 .history-row.active {
     background: var(--sidebar-active);
 }
 
+.history-row.active .history-item {
+    color: #ffffff;
+    font-weight: 500;
+}
+
 .delete-session-btn {
-    flex-shrink: 0;
+    opacity: 0;
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 28px;
-    height: 28px;
+    width: 32px;
+    height: 32px;
     background: transparent;
     border: none;
-    border-radius: 8px;
-    color: #9ca3af;
+    border-radius: 6px;
+    color: #94a3b8;
     cursor: pointer;
-    opacity: 0;
-    pointer-events: none;
     transition: all 0.2s ease;
-    margin-right: 6px;
 }
 
 .delete-session-btn:hover {
-    background: rgba(239, 68, 68, 0.2);
     color: #f87171;
 }
 
+.sidebar-footer {
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.logout-btn, .clear-all-btn {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    text-decoration: none;
+    color: var(--sidebar-text);
+    border: none;
+    background: transparent;
+    border-radius: var(--radius-md);
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s;
+    width: 100%;
+}
+
+.logout-btn:hover, .clear-all-btn:hover {
+    background: var(--sidebar-hover);
+    color: #ffffff;
+}
+
 /* ===========================
-   CHAT SECTION
+   MAIN CHAT AREA
 =========================== */
 .chat-container {
     flex: 1;
@@ -191,24 +202,23 @@ body {
 }
 
 .chat-header {
-    background: var(--chat-bg);
-    padding: 20px 30px;
-    font-size: 1.1rem;
-    font-weight: 600;
-    border-bottom: 1px solid var(--border-color);
+    padding: 16px 24px;
     display: flex;
     justify-content: space-between;
     align-items: center;
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid transparent; /* Keeps it minimal */
+    z-index: 10;
 }
 
 .title-wrapper {
     display: flex;
     align-items: center;
-    gap: 10px;
-}
-
-#chatTitleText {
-    cursor: default;
+    gap: 8px;
+    color: var(--text-dark);
+    font-weight: 600;
+    font-size: 1.1rem;
 }
 
 #chatTitleInput {
@@ -217,13 +227,12 @@ body {
     font-weight: 600;
     padding: 4px 8px;
     border: 1px solid var(--border-color);
-    border-radius: 6px;
+    border-radius: var(--radius-md);
     outline: none;
-    color: var(--text-dark);
 }
 
 #chatTitleInput:focus {
-    border-color: var(--user-msg);
+    border-color: var(--brand-primary);
 }
 
 .edit-btn {
@@ -231,88 +240,119 @@ body {
     border: none;
     cursor: pointer;
     color: var(--text-muted);
-    display: flex;
-    align-items: center;
-    justify-content: center;
     padding: 4px;
     border-radius: 4px;
-    transition: all 0.2s;
 }
 
 .edit-btn:hover {
-    background: var(--bot-msg);
     color: var(--text-dark);
-}
-
-.edit-btn svg {
-    width: 16px;
-    height: 16px;
+    background: var(--user-msg-bg);
 }
 
 .status {
-    position: absolute;
-    top: 75px;
-    right: 20px;
-    padding: 6px 12px;
-    font-size: 0.75rem;
-    font-weight: 600;
-    border-radius: 20px;
-    background: var(--bot-msg);
-    z-index: 10;
+    font-size: 0.8rem;
+    padding: 4px 10px;
+    border-radius: var(--radius-full);
+    font-weight: 500;
 }
-
 .status.connected { color: #16a34a; background: #dcfce7; }
 .status.disconnected { color: #dc2626; background: #fee2e2; }
 
+/* ===========================
+   MESSAGES LAYOUT
+=========================== */
 .chat-body {
     flex: 1;
     overflow-y: auto;
-    padding: 30px;
+    padding: 24px 0 100px 0; /* Padding bottom for floating input */
     display: flex;
     flex-direction: column;
-    gap: 20px;
     scroll-behavior: smooth;
 }
 
-.message {
-    max-width: 70%;
-    padding: 14px 18px;
-    border-radius: var(--radius-lg);
-    word-wrap: break-word;
+.message-row {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    padding: 16px 24px;
+}
+
+.message-content {
+    width: 100%;
+    max-width: var(--chat-max-width);
+    display: flex;
+    gap: 16px;
     line-height: 1.6;
-    font-size: 0.95rem;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    font-size: 1rem;
 }
 
-.user-message {
-    align-self: flex-end;
-    background: var(--user-msg);
-    color: white;
-    border-bottom-right-radius: 4px;
+/* User Message Styling */
+.user-row .message-content {
+    justify-content: flex-end;
 }
-
-.bot-message {
-    align-self: flex-start;
-    background: var(--bot-msg);
+.user-text {
+    background: var(--user-msg-bg);
     color: var(--text-dark);
-    border-bottom-left-radius: 4px;
+    padding: 12px 20px;
+    border-radius: 24px;
+    max-width: 80%;
+    word-wrap: break-word;
+}
+
+/* Bot Message Styling */
+.bot-row {
+    background: transparent;
+}
+.bot-avatar {
+    width: 30px;
+    height: 30px;
+    border-radius: 4px;
+    background: var(--brand-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    color: white;
+    margin-top: 4px;
+}
+.bot-text {
+    flex: 1;
+    color: var(--text-dark);
     white-space: pre-wrap;
     word-break: break-word;
+    padding-top: 6px;
 }
 
+/* ===========================
+   INPUT AREA
+=========================== */
 .chat-footer {
-    padding: 20px 30px;
-    background: var(--chat-bg);
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 24px;
+    background: linear-gradient(180deg, rgba(255,255,255,0) 0%, rgba(255,255,255,1) 40%);
+    display: flex;
+    justify-content: center;
 }
 
 .input-container {
+    width: 100%;
+    max-width: var(--chat-max-width);
     display: flex;
+    align-items: flex-end;
     gap: 10px;
-    background: var(--bot-msg);
-    padding: 8px 8px 8px 20px;
-    border-radius: 30px;
+    background: #ffffff;
+    padding: 10px 10px 10px 20px;
+    border-radius: 24px;
     border: 1px solid var(--border-color);
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+}
+
+.input-container:focus-within {
+    border-color: #cbd5e1;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
 }
 
 #messageInput {
@@ -322,232 +362,116 @@ body {
     outline: none;
     font-size: 1rem;
     color: var(--text-dark);
+    padding: 6px 0;
+    max-height: 120px;
+    resize: none;
 }
 
 #messageInput::placeholder {
-    color: var(--text-muted);
+    color: #94a3b8;
 }
 
 #sendBtn {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 40px;
-    height: 40px;
+    width: 36px;
+    height: 36px;
     border: none;
     border-radius: 50%;
-    background: var(--user-msg);
+    background: var(--brand-primary);
     color: white;
     cursor: pointer;
-    transition: transform 0.2s ease, opacity 0.2s;
+    transition: background 0.2s ease;
+    flex-shrink: 0;
 }
 
 #sendBtn:hover {
-    opacity: 0.9;
-    transform: scale(1.05);
+    background: var(--brand-hover);
 }
 
 #sendBtn svg {
-    width: 18px;
-    height: 18px;
-    margin-left: 2px;
+    width: 16px;
+    height: 16px;
 }
 
 /* ===========================
-   TYPING CURSOR EFFECT
+   EFFECTS & MODALS
 =========================== */
 .typing-cursor::after {
-    content: "|";
-    animation: blink 0.7s infinite;
-    font-weight: bold;
-    color: var(--text-muted);
+    content: "▋";
+    animation: blink 1s step-start infinite;
+    color: var(--brand-primary);
+    margin-left: 4px;
 }
-
-@keyframes blink {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0; }
-}
-
-/* ===========================
-   TYPING / LOADING INDICATOR
-=========================== */
-.typing-indicator {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    padding: 14px 18px;
-    background: var(--bot-msg);
-    border-radius: var(--radius-lg);
-    border-bottom-left-radius: 4px;
-    align-self: flex-start;
-    max-width: 70%;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-}
+@keyframes blink { 50% { opacity: 0; } }
 
 .typing-dot {
-    width: 8px;
-    height: 8px;
+    width: 6px;
+    height: 6px;
     border-radius: 50%;
     background: var(--text-muted);
-    animation: typingBounce 1.2s infinite ease-in-out;
+    animation: typingBounce 1.4s infinite ease-in-out both;
 }
-
-.typing-dot:nth-child(2) { animation-delay: 0.2s; }
-.typing-dot:nth-child(3) { animation-delay: 0.4s; }
+.typing-indicator {
+    display: flex;
+    gap: 4px;
+    padding-top: 16px;
+}
+.typing-dot:nth-child(1) { animation-delay: -0.32s; }
+.typing-dot:nth-child(2) { animation-delay: -0.16s; }
 
 @keyframes typingBounce {
-    0%, 60%, 100% { transform: translateY(0); opacity: 0.35; }
-    30%            { transform: translateY(-7px); opacity: 1; }
+    0%, 80%, 100% { transform: scale(0); }
+    40% { transform: scale(1); }
 }
 
-/* ===========================
-   CONFIRM MODAL
-=========================== */
+/* Modals */
 .modal-overlay {
     display: none;
     position: fixed;
     inset: 0;
-    background: rgba(0, 0, 0, 0.5);
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(2px);
     z-index: 1000;
     align-items: center;
     justify-content: center;
 }
-
-.modal-overlay.active {
-    display: flex;
-}
-
+.modal-overlay.active { display: flex; }
 .modal-box {
     background: #fff;
-    border-radius: 16px;
-    padding: 28px 32px;
+    border-radius: var(--radius-lg);
+    padding: 32px;
     max-width: 400px;
     width: 90%;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.2);
-    animation: modalIn 0.2s ease;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+    animation: modalIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
-
 @keyframes modalIn {
-    from { opacity: 0; transform: scale(0.93) translateY(-8px); }
+    from { opacity: 0; transform: scale(0.96) translateY(10px); }
     to   { opacity: 1; transform: scale(1) translateY(0); }
 }
+.modal-box h3 { font-size: 1.2rem; margin-bottom: 8px; }
+.modal-box p { color: var(--text-muted); line-height: 1.5; margin-bottom: 24px; }
+.modal-actions { display: flex; gap: 12px; justify-content: flex-end; }
 
-.modal-icon {
-    width: 44px;
-    height: 44px;
-    border-radius: 50%;
-    background: #fee2e2;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-bottom: 16px;
-}
-
-.modal-icon svg {
-    width: 22px;
-    height: 22px;
-    color: var(--danger);
-}
-
-.modal-box h3 {
-    font-size: 1.1rem;
-    font-weight: 700;
-    color: var(--text-dark);
-    margin-bottom: 8px;
-}
-
-.modal-box p {
-    font-size: 0.9rem;
-    color: var(--text-muted);
-    line-height: 1.5;
-    margin-bottom: 24px;
-}
-
-.modal-box p strong {
-    color: var(--text-dark);
-}
-
-.modal-actions {
-    display: flex;
-    gap: 10px;
-    justify-content: flex-end;
-}
-
-.btn-cancel {
-    padding: 9px 20px;
-    border-radius: 8px;
-    border: 1px solid var(--border-color);
-    background: #fff;
-    color: var(--text-dark);
-    font-size: 0.9rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition: background 0.2s;
-}
-
-.btn-cancel:hover {
-    background: var(--bot-msg);
-}
-
-.btn-delete {
-    padding: 9px 20px;
-    border-radius: 8px;
-    border: none;
-    background: var(--danger);
-    color: #fff;
-    font-size: 0.9rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: background 0.2s;
-}
-
-.btn-delete:hover {
-    background: var(--danger-hover);
-}
-
-/* ===========================
-   SIDEBAR FOOTER
-=========================== */
-.sidebar-footer {
-    padding: 14px 20px;
-    border-top: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-.clear-all-btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    width: 100%;
-    padding: 10px;
-    background: transparent;
-    border: 1px solid rgba(239, 68, 68, 0.2);
+.btn-cancel, .btn-delete {
+    padding: 10px 20px;
     border-radius: var(--radius-md);
-    color: #9ca3af;
-    font-size: 0.85rem;
     font-weight: 500;
     cursor: pointer;
-    transition: all 0.2s ease;
+    font-size: 0.95rem;
 }
+.btn-cancel { border: 1px solid var(--border-color); background: #fff; }
+.btn-cancel:hover { background: var(--user-msg-bg); }
+.btn-delete { border: none; background: var(--danger); color: #fff; }
+.btn-delete:hover { background: var(--danger-hover); }
 
-.clear-all-btn:hover {
-    background: rgba(239, 68, 68, 0.12);
-    border-color: rgba(239, 68, 68, 0.4);
-    color: #f87171;
-}
-
-/* ===========================
-   MOBILE
-=========================== */
+/* Mobile */
 @media(max-width: 768px) {
-    .sidebar { width: 220px; }
-    .message { max-width: 85%; }
-    .chat-header, .chat-footer { padding: 15px; }
-    .chat-body { padding: 15px; }
-}
-@media(max-width: 480px) {
-    .sidebar { display: none; }
-    .message { max-width: 95%; }
+    .sidebar { position: absolute; z-index: 50; height: 100%; transform: translateX(-100%); }
+    .sidebar.open { transform: translateX(0); }
+    .message-content { padding: 0 16px; }
 }
 </style>
 </head>
@@ -555,16 +479,11 @@ body {
 <body>
 
 <div class="app-container">
-
     <div class="sidebar">
         <div class="sidebar-header">
             <a href="{% url 'exit_chat' %}" class="new-chat-btn">
-                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-                New Chat
-            </a>
-            <a href="{% url 'logout' %}" class="logout-btn">
-                <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h6a2 2 0 012 2v1"></path></svg>
-                Logout
+                <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                New destination
             </a>
         </div>
 
@@ -574,89 +493,74 @@ body {
                     <a href="{% url 'history_based_on_session' chat.chat_id %}" class="history-item">
                         {{ chat.chat_title }}
                     </a>
-                    <button
-                        class="delete-session-btn"
-                        title="Delete this chat"
-                        onclick="confirmDelete('{{ chat.chat_id }}', '{{ chat.chat_title|escapejs }}')"
-                    >
-                        <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                        </svg>
+                    <button class="delete-session-btn" title="Delete this chat" onclick="confirmDelete('{{ chat.chat_id }}', '{{ chat.chat_title|escapejs }}')">
+                        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                     </button>
                 </div>
             {% empty %}
-                <div style="padding:10px; color: var(--text-muted); font-size: 0.9rem; text-align: center;">
-                    No chats available
+                <div style="padding: 16px; color: #64748b; font-size: 0.85rem; text-align: center;">
+                    No recent travels
                 </div>
             {% endfor %}
         </div>
 
         <div class="sidebar-footer">
             <button class="clear-all-btn" onclick="confirmClearAll()">
-                <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                </svg>
-                Clear All Chats
+                <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                Clear history
             </button>
+            <a href="{% url 'logout' %}" class="logout-btn">
+                <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h6a2 2 0 012 2v1"></path></svg>
+                Sign out
+            </a>
         </div>
     </div>
 
     <div class="chat-container">
-
         <div class="chat-header">
             <div class="title-wrapper">
-                <span id="chatTitleText">
-                    {% if current_chat %}
-                        {{ current_chat.chat_title }}
-                    {% else %}
-                        AI Chatbot
-                    {% endif %}
-                </span>
-                
+                <span id="chatTitleText">{% if current_chat %}{{ current_chat.chat_title }}{% else %}Travel AI Assistant{% endif %}</span>
                 {% if current_chat %}
                 <input type="text" id="chatTitleInput" value="{{ current_chat.chat_title }}">
                 <button class="edit-btn" id="editTitleBtn" title="Edit chat title">
-                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                    <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
                 </button>
                 {% endif %}
             </div>
+            <div class="status" id="status">Connecting...</div>
         </div>
-
-        <div class="status" id="status">Connecting...</div>
 
         <div class="chat-body" id="chatBody">
             {% for msg in conversation %}
-                <div class="message user-message">{{ msg.user_message }}</div>
-                <div class="message bot-message">{{ msg.bot_message }}</div>
+                <div class="message-row user-row">
+                    <div class="message-content">
+                        <div class="user-text">{{ msg.user_message }}</div>
+                    </div>
+                </div>
+                <div class="message-row bot-row">
+                    <div class="message-content">
+                        <div class="bot-avatar">
+                            <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 8l-8 8m0-8l8 8m-4-10a9 9 0 110 18 9 9 0 010-18z"></path></svg>
+                        </div>
+                        <div class="bot-text">{{ msg.bot_message }}</div>
+                    </div>
+                </div>
             {% endfor %}
         </div>
 
         <div class="chat-footer">
             <div class="input-container">
-                <input type="text" id="messageInput" placeholder="Type your message..." autocomplete="off">
+                <input type="text" id="messageInput" placeholder="Where do you want to go next?" autocomplete="off">
                 <button id="sendBtn" title="Send message">
                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>
                 </button>
             </div>
         </div>
-
     </div>
-
 </div>
 
-<!-- ===========================
-     DELETE CONFIRM MODAL
-=========================== -->
 <div class="modal-overlay" id="deleteModal">
     <div class="modal-box">
-        <div class="modal-icon">
-            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-            </svg>
-        </div>
         <h3>Delete Conversation?</h3>
         <p>You are about to delete <strong id="modalChatTitle"></strong>. This action cannot be undone.</p>
         <div class="modal-actions">
@@ -666,24 +570,13 @@ body {
     </div>
 </div>
 
-<!-- ===========================
-     CLEAR ALL CONFIRM MODAL
-=========================== -->
 <div class="modal-overlay" id="clearAllModal">
     <div class="modal-box">
-        <div class="modal-icon">
-            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
-            </svg>
-        </div>
-        <h3>Clear All Chats?</h3>
+        <h3>Clear All History?</h3>
         <p>This will permanently delete <strong>all your conversations</strong>. This action cannot be undone.</p>
         <div class="modal-actions">
             <button class="btn-cancel" onclick="closeClearAllModal()">Cancel</button>
-            <a href="{% url 'delete_all' %}" class="btn-delete" style="text-decoration:none; display:inline-flex; align-items:center;">
-                Clear All
-            </a>
+            <a href="{% url 'delete_all' %}" class="btn-delete" style="text-decoration:none;">Clear All</a>
         </div>
     </div>
 </div>
@@ -694,8 +587,6 @@ const chatBody = document.getElementById("chatBody");
 const messageInput = document.getElementById("messageInput");
 const sendBtn = document.getElementById("sendBtn");
 const statusDiv = document.getElementById("status");
-
-// Title Edit Elements
 const editTitleBtn = document.getElementById("editTitleBtn");
 const chatTitleText = document.getElementById("chatTitleText");
 const chatTitleInput = document.getElementById("chatTitleInput");
@@ -709,17 +600,14 @@ const socket = new WebSocket("ws://" + window.location.host + "/ws/chat/");
 socket.onopen = function(){
     statusDiv.innerHTML = "Connected";
     statusDiv.className = "status connected";
-    setTimeout(() => { statusDiv.style.display = "none"; }, 2000);
+    setTimeout(() => { statusDiv.style.opacity = "0"; setTimeout(()=>statusDiv.style.display="none",300); }, 2000);
 };
 
 socket.onclose = function(){
     statusDiv.style.display = "block";
+    statusDiv.style.opacity = "1";
     statusDiv.innerHTML = "Disconnected";
     statusDiv.className = "status disconnected";
-};
-
-socket.onerror = function(error){
-    console.error("WebSocket Error:", error);
 };
 
 socket.onmessage = function(event){
@@ -733,45 +621,70 @@ socket.onmessage = function(event){
 };
 
 // ===========================
-// CHAT FUNCTIONALITY
+// CHAT LAYOUT GENERATORS
 // ===========================
 function addUserMessage(text){
-    const div = document.createElement("div");
-    div.classList.add("message", "user-message");
-    div.innerText = text;
-    chatBody.appendChild(div);
+    const row = document.createElement("div");
+    row.className = "message-row user-row";
+    row.innerHTML = `<div class="message-content"><div class="user-text">${escapeHTML(text)}</div></div>`;
+    chatBody.appendChild(row);
     scrollToBottom();
 }
 
 function addBotMessage(text){
-    const div = document.createElement("div");
-    div.classList.add("message", "bot-message", "typing-cursor");
-    chatBody.appendChild(div);
+    const row = document.createElement("div");
+    row.className = "message-row bot-row";
+    
+    // Create inner structure
+    const content = document.createElement("div");
+    content.className = "message-content";
+    
+    const avatar = document.createElement("div");
+    avatar.className = "bot-avatar";
+    avatar.innerHTML = '<svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 8l-8 8m0-8l8 8m-4-10a9 9 0 110 18 9 9 0 010-18z"></path></svg>';
+    
+    const textDiv = document.createElement("div");
+    textDiv.className = "bot-text typing-cursor";
+    
+    content.appendChild(avatar);
+    content.appendChild(textDiv);
+    row.appendChild(content);
+    chatBody.appendChild(row);
 
     let index = 0;
     function typeWriter(){
         if(index < text.length){
-            div.textContent += text.charAt(index);
+            textDiv.textContent += text.charAt(index);
             index++;
             scrollToBottom();
-            setTimeout(typeWriter, 15);
+            setTimeout(typeWriter, 10);
         } else {
-            div.classList.remove("typing-cursor");
+            textDiv.classList.remove("typing-cursor");
         }
     }
     typeWriter();
 }
 
 function showTypingIndicator(){
-    const el = document.createElement("div");
-    el.classList.add("typing-indicator");
-    el.id = "typingIndicator";
-    el.innerHTML = '<div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>';
-    chatBody.appendChild(el);
+    const row = document.createElement("div");
+    row.className = "message-row bot-row";
+    row.id = "typingIndicator";
+    row.innerHTML = `
+        <div class="message-content">
+            <div class="bot-avatar">
+                <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 8l-8 8m0-8l8 8m-4-10a9 9 0 110 18 9 9 0 010-18z"></path></svg>
+            </div>
+            <div class="bot-text typing-indicator">
+                <div class="typing-dot"></div>
+                <div class="typing-dot"></div>
+                <div class="typing-dot"></div>
+            </div>
+        </div>`;
+    chatBody.appendChild(row);
     scrollToBottom();
     sendBtn.disabled = true;
     messageInput.disabled = true;
-    sendBtn.style.opacity = "0.45";
+    sendBtn.style.opacity = "0.5";
 }
 
 function removeTypingIndicator(){
@@ -779,7 +692,7 @@ function removeTypingIndicator(){
     if(el) el.remove();
     sendBtn.disabled = false;
     messageInput.disabled = false;
-    sendBtn.style.opacity = "";
+    sendBtn.style.opacity = "1";
     messageInput.focus();
 }
 
@@ -788,11 +701,7 @@ function sendMessage(){
     if(message === "") return;
 
     addUserMessage(message);
-    socket.send(JSON.stringify({
-        action: "chat_message",
-        message: message,
-        chat_id: CHAT_ID
-    }));
+    socket.send(JSON.stringify({ action: "chat_message", message: message, chat_id: CHAT_ID }));
     messageInput.value = "";
     showTypingIndicator();
 }
@@ -805,12 +714,15 @@ messageInput.addEventListener("keypress", function(e){
 function scrollToBottom(){
     chatBody.scrollTop = chatBody.scrollHeight;
 }
-
 scrollToBottom();
 
 // ===========================
-// EDIT TITLE FUNCTIONALITY
+// UTILS & MODALS
 // ===========================
+function escapeHTML(str) {
+    return str.replace(/[&<>'"]/g, tag => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'}[tag] || tag));
+}
+
 if (editTitleBtn && chatTitleText && chatTitleInput) {
     editTitleBtn.addEventListener("click", () => {
         chatTitleText.style.display = "none";
@@ -819,46 +731,30 @@ if (editTitleBtn && chatTitleText && chatTitleInput) {
         chatTitleInput.focus();
         chatTitleInput.selectionStart = chatTitleInput.selectionEnd = chatTitleInput.value.length;
     });
-
-    chatTitleInput.addEventListener("keypress", (e) => {
-        if(e.key === "Enter") saveTitle();
-    });
-
+    chatTitleInput.addEventListener("keypress", (e) => { if(e.key === "Enter") saveTitle(); });
     chatTitleInput.addEventListener("blur", saveTitle);
 
     function saveTitle() {
         const newTitle = chatTitleInput.value.trim();
-
         if(newTitle && newTitle !== chatTitleText.innerText) {
             chatTitleText.innerText = newTitle;
-
             const activeHistoryItem = document.querySelector('.history-row.active .history-item');
             if(activeHistoryItem) activeHistoryItem.textContent = newTitle;
-
             if(socket.readyState === WebSocket.OPEN) {
-                socket.send(JSON.stringify({
-                    action: "update_title",
-                    chat_id: CHAT_ID,
-                    new_title: newTitle
-                }));
+                socket.send(JSON.stringify({ action: "update_title", chat_id: CHAT_ID, new_title: newTitle }));
             }
         } else {
             chatTitleInput.value = chatTitleText.innerText;
         }
-
         chatTitleInput.style.display = "none";
         chatTitleText.style.display = "inline-block";
         editTitleBtn.style.display = "flex";
     }
 }
 
-// ===========================
-// DELETE SESSION MODAL
-// ===========================
 const deleteModal = document.getElementById("deleteModal");
 const modalChatTitle = document.getElementById("modalChatTitle");
 const confirmDeleteBtn = document.getElementById("confirmDeleteBtn");
-
 let pendingDeleteUrl = null;
 
 function confirmDelete(sessionId, chatTitle) {
@@ -866,48 +762,18 @@ function confirmDelete(sessionId, chatTitle) {
     pendingDeleteUrl = "{% url 'delete_session' '00000000' %}".replace("00000000", sessionId);
     deleteModal.classList.add("active");
 }
+function closeModal() { deleteModal.classList.remove("active"); pendingDeleteUrl = null; }
+confirmDeleteBtn.addEventListener("click", function() { if (pendingDeleteUrl) window.location.href = pendingDeleteUrl; });
+deleteModal.addEventListener("click", function(e) { if (e.target === deleteModal) closeModal(); });
 
-function closeModal() {
-    deleteModal.classList.remove("active");
-    pendingDeleteUrl = null;
-}
-
-confirmDeleteBtn.addEventListener("click", function() {
-    if (pendingDeleteUrl) {
-        window.location.href = pendingDeleteUrl;
-    }
-});
-
-// Close modal if clicking outside the box
-deleteModal.addEventListener("click", function(e) {
-    if (e.target === deleteModal) closeModal();
-});
-
-// Close modal on Escape key
-document.addEventListener("keydown", function(e) {
-    if (e.key === "Escape") {
-        closeModal();
-        closeClearAllModal();
-    }
-});
-
-// ===========================
-// CLEAR ALL MODAL
-// ===========================
 const clearAllModal = document.getElementById("clearAllModal");
-
-function confirmClearAll() {
-    clearAllModal.classList.add("active");
-}
-
-function closeClearAllModal() {
-    clearAllModal.classList.remove("active");
-}
-
-clearAllModal.addEventListener("click", function(e) {
-    if (e.target === clearAllModal) closeClearAllModal();
-});
+function confirmClearAll() { clearAllModal.classList.add("active"); }
+function closeClearAllModal() { clearAllModal.classList.remove("active"); }
+clearAllModal.addEventListener("click", function(e) { if (e.target === clearAllModal) closeClearAllModal(); });
+document.addEventListener("keydown", function(e) { if (e.key === "Escape") { closeModal(); closeClearAllModal(); }});
 </script>
 
 </body>
 </html>
+
+```

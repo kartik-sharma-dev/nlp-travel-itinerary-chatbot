@@ -3,132 +3,199 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Login</title>
-
+<title>Login - Travel AI</title>
 <style>
-*{
-    margin:0;
-    padding:0;
-    box-sizing:border-box;
-    font-family:Arial,sans-serif;
+:root {
+    --bg-main: #f8fafc;
+    --card-bg: #ffffff;
+    --text-dark: #0f172a;
+    --text-muted: #64748b;
+    --border-color: #e2e8f0;
+    
+    /* Brand Colors - Matching the Chat App */
+    --brand-primary: #0ea5e9;
+    --brand-hover: #0284c7;
+    --brand-light: #e0f2fe;
+    
+    /* Alerts */
+    --error-bg: #fee2e2;
+    --error-text: #dc2626;
+    
+    --radius-lg: 16px;
+    --radius-md: 8px;
 }
 
-body{
-    min-height:100vh;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    background:linear-gradient(135deg,#667eea,#764ba2);
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
 
-.container{
-    width:400px;
-    background:white;
-    padding:30px;
-    border-radius:15px;
-    box-shadow:0 5px 20px rgba(0,0,0,0.2);
+body {
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: var(--bg-main);
+    color: var(--text-dark);
+    -webkit-font-smoothing: antialiased;
 }
 
-h2{
-    text-align:center;
-    margin-bottom:25px;
-    color:#333;
+.container {
+    width: 100%;
+    max-width: 420px;
+    background: var(--card-bg);
+    padding: 40px;
+    border-radius: var(--radius-lg);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05), 0 4px 6px rgba(0, 0, 0, 0.02);
+    margin: 20px;
 }
 
-.input-group{
-    margin-bottom:18px;
+.brand-icon {
+    width: 48px;
+    height: 48px;
+    background: var(--brand-light);
+    color: var(--brand-primary);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 20px auto;
 }
 
-label{
-    display:block;
-    margin-bottom:5px;
-    font-weight:bold;
+h2 {
+    text-align: center;
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 8px;
 }
 
-input{
-    width:100%;
-    padding:10px;
-    border:1px solid #ccc;
-    border-radius:8px;
+.subtitle {
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 0.95rem;
+    margin-bottom: 30px;
 }
 
-input:focus{
-    outline:none;
-    border-color:#667eea;
+.error-alert {
+    background: var(--error-bg);
+    color: var(--error-text);
+    padding: 12px 16px;
+    border-radius: var(--radius-md);
+    font-size: 0.9rem;
+    margin-bottom: 24px;
+    text-align: center;
+    font-weight: 500;
 }
 
-.btn{
-    width:100%;
-    padding:12px;
-    border:none;
-    border-radius:8px;
-    background:#667eea;
-    color:white;
-    font-size:16px;
-    cursor:pointer;
+.input-group {
+    margin-bottom: 20px;
 }
 
-.btn:hover{
-    background:#5563d6;
+label {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--text-dark);
 }
 
-.signup-link{
-    text-align:center;
-    margin-top:15px;
+input {
+    width: 100%;
+    padding: 12px 16px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    font-size: 1rem;
+    color: var(--text-dark);
+    transition: all 0.2s ease;
+    background: #fff;
 }
 
-.signup-link a{
-    text-decoration:none;
-    color:#667eea;
-    font-weight:bold;
+input:focus {
+    outline: none;
+    border-color: var(--brand-primary);
+    box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.15);
 }
 
-.error{
-    color:red;
-    text-align:center;
-    margin-bottom:15px;
+.btn {
+    width: 100%;
+    padding: 12px;
+    border: none;
+    border-radius: var(--radius-md);
+    background: var(--brand-primary);
+    color: white;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s ease;
+    margin-top: 10px;
+}
+
+.btn:hover {
+    background: var(--brand-hover);
+}
+
+.signup-link {
+    text-align: center;
+    margin-top: 24px;
+    font-size: 0.95rem;
+    color: var(--text-muted);
+}
+
+.signup-link a {
+    text-decoration: none;
+    color: var(--brand-primary);
+    font-weight: 500;
+    transition: color 0.2s;
+}
+
+.signup-link a:hover {
+    color: var(--brand-hover);
 }
 </style>
 </head>
 <body>
 
 <div class="container">
-
-    <h2>Login</h2>
+    <div class="brand-icon">
+        <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 8l-8 8m0-8l8 8m-4-10a9 9 0 110 18 9 9 0 010-18z"></path></svg>
+    </div>
+    
+    <h2>Welcome Back</h2>
+    <p class="subtitle">Sign in to continue your journey</p>
 
     <form method="POST">
         {% csrf_token %}
-
+        
         {% if messages %}
             {% for message in messages %}
-                <div class="error">
+                <div class="error-alert">
                     {{ message }}
                 </div>
             {% endfor %}
         {% endif %}
-
+        
         <div class="input-group">
-            <label>Email</label>
-            <input type="email" name="email" required>
+            <label for="email">Email address</label>
+            <input type="email" name="email" id="email" required autocomplete="email">
         </div>
-
+        
         <div class="input-group">
-            <label>Password</label>
-            <input type="password" name="password" required>
+            <label for="password">Password</label>
+            <input type="password" name="password" id="password" required autocomplete="current-password">
         </div>
-
+        
         <button type="submit" class="btn">
-            Login
+            Sign In
         </button>
-
     </form>
-
+    
     <div class="signup-link">
-        Don't have an account?
-        <a href="{% url 'sign_up' %}">Sign Up</a>
+        Don't have an account? <a href="{% url 'sign_up' %}">Sign Up</a>
     </div>
-
 </div>
 
 </body>
 </html>
+
